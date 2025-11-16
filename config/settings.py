@@ -24,6 +24,13 @@ class Config:
     HEADLESS = False  # Set to True to hide browser
     TIMEOUT = 30000  # 30 seconds in milliseconds
     
+    # API/Server settings
+    PORT = int(os.getenv('PORT', 5000))
+    FRONTEND_PORT = int(os.getenv('FRONTEND_PORT', 3000))
+    # Frontend URL - use explicit URL if provided, otherwise build from port
+    _frontend_url = os.getenv('FRONTEND_URL')
+    FRONTEND_URL = _frontend_url if _frontend_url else f'http://localhost:{FRONTEND_PORT}'
+    
     @classmethod
     def validate(cls):
         if not all([cls.USERNAME, cls.PASSWORD]):

@@ -24,8 +24,251 @@ class BoxMagicScraper:
         self.page = None
         self.is_logged_in = False
     
-    def start_browser(self, use_saved_session=False):
-        """Initialize browser"""
+    def login(self) -> bool:
+        """
+        Automatically login using credentials from config
+        Returns True if login successful, False otherwise
+        """
+        try:
+            logger.info("Attempting automatic login...")
+            
+            # Navigate to login page
+            logger.info(f"Navigating to login page: {self.config.LOGIN_URL}")
+            self.page.goto(self.config.LOGIN_URL, wait_until='networkidle')
+            self.page.wait_for_timeout(2000)
+            
+            # Try multiple selectors for username/email field
+            username_selectors = [
+                'input[type="email"]',
+                'input[name="email"]',
+                'input[name="username"]',
+                'input[name="user"]',
+                'input[id*="email"]',
+                'input[id*="username"]',
+                'input[placeholder*="email" i]',
+                'input[placeholder*="usuario" i]',
+            ]
+            
+            username_filled = False
+            for selector in username_selectors:
+                try:
+                    if self.page.locator(selector).count() > 0:
+                        self.page.fill(selector, self.config.USERNAME)
+                        logger.info(f"✓ Username filled using selector: {selector}")
+                        username_filled = True
+                        break
+                except:
+                    continue
+            
+            if not username_filled:
+                logger.error("Could not find username/email field")
+                return False
+            
+            # Try multiple selectors for password field
+            password_selectors = [
+                'input[type="password"]',
+                'input[name="password"]',
+                'input[name="pass"]',
+                'input[id*="password"]',
+            ]
+            
+            password_filled = False
+            for selector in password_selectors:
+                try:
+                    if self.page.locator(selector).count() > 0:
+                        self.page.fill(selector, self.config.PASSWORD)
+                        logger.info(f"✓ Password filled using selector: {selector}")
+                        password_filled = True
+                        break
+                except:
+                    continue
+            
+            if not password_filled:
+                logger.error("Could not find password field")
+                return False
+            
+            # Try multiple selectors for login button
+            login_button_selectors = [
+                'button[type="submit"]',
+                'input[type="submit"]',
+                'button:has-text("Login")',
+                'button:has-text("Iniciar")',
+                'button:has-text("Entrar")',
+                'button:has-text("Sign in")',
+                'button.login',
+                'button[class*="login"]',
+            ]
+            
+            button_clicked = False
+            for selector in login_button_selectors:
+                try:
+                    if self.page.locator(selector).count() > 0:
+                        self.page.click(selector)
+                        logger.info(f"✓ Login button clicked using selector: {selector}")
+                        button_clicked = True
+                        break
+                except:
+                    continue
+            
+            if not button_clicked:
+                # Try pressing Enter on password field
+                try:
+                    self.page.keyboard.press('Enter')
+                    logger.info("✓ Login attempted via Enter key")
+                    button_clicked = True
+                except:
+                    pass
+            
+            if not button_clicked:
+                logger.error("Could not find or click login button")
+                return False
+            
+            # Wait for navigation after login
+            self.page.wait_for_timeout(3000)
+            
+            # Check if login was successful
+            current_url = self.page.url
+            logger.info(f"Current URL after login attempt: {current_url}")
+            
+            # Check if we're on the intermediate user selection page
+            # This page shows user profile with "Admin panel" button
+            # The button structure: <div class="Ui2Boton"> containing <button type="button" aria-label="Boton"></button>
+            # and the text "Admin panel" is in a sibling div
+            
+            # First, check if we're on the intermediate page by looking for the Ui2Boton structure
+            is_intermediate_page = False
+            try:
+                # Check for Ui2Boton divs (these are the button containers)
+                if self.page.locator('.Ui2Boton').count() > 0:
+                    is_intermediate_page = True
+                    logger.info("Detected intermediate user selection page (Ui2Boton found)")
+            except:
+                pass
+            
+            # Also check by looking for "Admin panel" text
+            admin_panel_selectors = [
+                '.Ui2Boton:has-text("Admin panel") button[aria-label="Boton"]',
+                '.Ui2Boton:has-text("Admin panel") button',
+                'div.Ui2Boton:has-text("Admin panel")',
+                'button[aria-label="Boton"]',  # Generic fallback - will need to find the right one
+                'a:has-text("Admin panel")',
+                'a:has-text("Admin Panel")',
+                'button:has-text("Admin panel")',
+            ]
+            
+            # Also check by URL pattern and page content
+            if 'auth.boxmagic.cl/login' in current_url:
+                try:
+                    # Wait a bit for page to load
+                    self.page.wait_for_timeout(1000)
+                    page_text = self.page.locator('body').inner_text().lower()
+                    if 'admin panel' in page_text or 'access to sessions' in page_text or 'not your account' in page_text:
+                        is_intermediate_page = True
+                        logger.info("Detected intermediate page by URL and content")
+                except:
+                    pass
+            
+            # If on intermediate page, click "Admin panel"
+            if is_intermediate_page:
+                logger.info("Clicking 'Admin panel' to proceed...")
+                admin_clicked = False
+                
+                # Try specific selectors first
+                for selector in admin_panel_selectors:
+                    try:
+                        if self.page.locator(selector).count() > 0:
+                            self.page.click(selector)
+                            logger.info(f"✓ Clicked 'Admin panel' using selector: {selector}")
+                            admin_clicked = True
+                            break
+                    except Exception as e:
+                        logger.debug(f"Selector {selector} failed: {e}")
+                        continue
+                
+                # If specific selectors didn't work, use JavaScript to find the correct button
+                if not admin_clicked:
+                    try:
+                        clicked = self.page.evaluate('''
+                            () => {
+                                // Find all Ui2Boton divs
+                                const botones = document.querySelectorAll('.Ui2Boton');
+                                for (let botonDiv of botones) {
+                                    // Check if this div contains "Admin panel" text
+                                    const text = botonDiv.textContent || botonDiv.innerText || '';
+                                    if (text.toLowerCase().includes('admin panel')) {
+                                        // Find the button inside this div
+                                        const button = botonDiv.querySelector('button[aria-label="Boton"]') || 
+                                                      botonDiv.querySelector('button');
+                                        if (button) {
+                                            button.click();
+                                            return true;
+                                        }
+                                        // If no button found, click the div itself
+                                        botonDiv.click();
+                                        return true;
+                                    }
+                                }
+                                
+                                // Fallback: find any button with aria-label="Boton" near "Admin panel" text
+                                const allButtons = document.querySelectorAll('button[aria-label="Boton"]');
+                                for (let btn of allButtons) {
+                                    const parent = btn.closest('.Ui2Boton');
+                                    if (parent) {
+                                        const text = parent.textContent || parent.innerText || '';
+                                        if (text.toLowerCase().includes('admin panel')) {
+                                            btn.click();
+                                            return true;
+                                        }
+                                    }
+                                }
+                                
+                                return false;
+                            }
+                        ''')
+                        if clicked:
+                            logger.info("✓ Clicked 'Admin panel' via JavaScript (targeting Ui2Boton structure)")
+                            admin_clicked = True
+                        else:
+                            logger.warning("Could not find Admin panel button via JavaScript")
+                    except Exception as e:
+                        logger.warning(f"Could not click Admin panel via JavaScript: {e}")
+                
+                if admin_clicked:
+                    # Wait for navigation after clicking Admin panel
+                    self.page.wait_for_timeout(3000)
+                    self.page.wait_for_load_state('networkidle', timeout=10000)
+                    current_url = self.page.url
+                    logger.info(f"Current URL after clicking Admin panel: {current_url}")
+            
+            # Check if login was successful (we're no longer on login page)
+            if 'login' not in current_url.lower() or current_url != self.config.LOGIN_URL:
+                logger.info("✓ Login successful and navigated to application!")
+                
+                # Save session for future use
+                session_file = self.config.BASE_DIR / 'session.json'
+                storage_state = self.context.storage_state()
+                with open(session_file, 'w') as f:
+                    json.dump(storage_state, f, indent=2)
+                logger.info(f"✓ Session saved to {session_file}")
+                
+                self.is_logged_in = True
+                return True
+            else:
+                logger.error("Login failed - still on login page")
+                self.page.screenshot(
+                    path=str(self.config.SCREENSHOTS_DIR / 'login_failed.png')
+                )
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error during login: {str(e)}", exc_info=True)
+            self.page.screenshot(
+                path=str(self.config.SCREENSHOTS_DIR / 'login_error.png')
+            )
+            return False
+    
+    def start_browser(self, use_saved_session=True, auto_login=True):
+        """Initialize browser and optionally login"""
         logger.info("Starting browser...")
         self.playwright = sync_playwright().start()
         
@@ -36,11 +279,16 @@ class BoxMagicScraper:
         
         session_file = self.config.BASE_DIR / 'session.json'
         storage_state = None
+        session_valid = False
         
         if use_saved_session and session_file.exists():
-            logger.info("Using saved session...")
-            with open(session_file, 'r') as f:
-                storage_state = json.load(f)
+            try:
+                logger.info("Loading saved session...")
+                with open(session_file, 'r') as f:
+                    storage_state = json.load(f)
+                session_valid = True
+            except Exception as e:
+                logger.warning(f"Could not load session file: {e}")
         
         self.context = self.browser.new_context(
             viewport={'width': 1920, 'height': 1080},
@@ -50,9 +298,30 @@ class BoxMagicScraper:
         
         self.page = self.context.new_page()
         
-        if storage_state:
-            self.is_logged_in = True
-            logger.info("Logged in using saved session")
+        # Verify session is still valid by checking if we're logged in
+        if session_valid and storage_state:
+            try:
+                # Navigate to a protected page to verify session
+                self.page.goto(self.config.CHECKIN_URL, wait_until='networkidle', timeout=10000)
+                self.page.wait_for_timeout(2000)
+                
+                # Check if we're redirected to login (session invalid)
+                if 'login' in self.page.url.lower():
+                    logger.warning("Saved session appears to be invalid, will attempt login")
+                    session_valid = False
+                else:
+                    self.is_logged_in = True
+                    logger.info("✓ Logged in using saved session")
+            except Exception as e:
+                logger.warning(f"Could not verify session: {e}, will attempt login")
+                session_valid = False
+        
+        # If no valid session, attempt automatic login
+        if not self.is_logged_in and auto_login:
+            if self.login():
+                logger.info("✓ Automatic login successful")
+            else:
+                logger.error("✗ Automatic login failed")
         
         logger.info("Browser started successfully")
     
