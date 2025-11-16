@@ -557,6 +557,510 @@ class BoxMagicScraper:
         
         return all_data
     
+    # Find and replace this method in src/scraper_playwright.py
+
+    def select_date_on_checkin(self, date_str: str) -> bool:
+        logger.info(f"Selecting date: {date_str}")
+        
+        date_selector = '#class_date'
+        
+        try:
+            # Wait for the date input to be available
+            self.page.wait_for_selector(date_selector, timeout=10000)
+            
+            logger.info(f"Found date input with selector: {date_selector}")
+            
+            # Set the date value using JavaScript
+            success = self.page.evaluate('''
+                (args) => {
+                    const dateValue = args.dateValue;
+                    const selector = args.selector;
+                    const input = document.querySelector(selector);
+                    if (!input) return false;
+                    
+                    // Set the value
+                    input.value = dateValue;
+                    
+                    // Trigger multiple events to ensure it's picked up
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                    input.dispatchEvent(new Event('blur', { bubbles: true }));
+                    
+                    // If jQuery is available, trigger change event
+                    if (window.jQuery) {
+                        window.jQuery(input).val(dateValue).trigger('change');
+                    }
+                    
+                    // If there's a datepicker, try to update it
+                    if (window.jQuery && window.jQuery(input).data('datepicker')) {
+                        window.jQuery(input).datepicker('update', dateValue);
+                        window.jQuery(input).datepicker('setDate', dateValue);
+                    }
+                    
+                    return true;
+                }
+            ''', {'dateValue': date_str, 'selector': date_selector})
+            
+            if not success:
+                logger.error("Failed to set date value via JavaScript")
+                return False
+            
+            # Wait longer for the date change to process and classes to load
+            logger.info("Waiting for classes dropdown to populate...")
+            self.page.wait_for_timeout(3000)
+            
+            # Take screenshot after date selection
+            self.page.screenshot(
+                path=str(self.config.SCREENSHOTS_DIR / f'after_date_select_{date_str.replace("-", "_")}.png')
+            )
+            
+            logger.info(f"✓ Date selected: {date_str}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error with date selector {date_selector}: {str(e)}")
+            return False
+        
+    def get_available_classes_for_date(self) -> List[Dict]:
+        logger.info("Getting available classes for selected date...")
+        
+        # Use the specific selector for the class dropdown
+        class_selector = '#clases'
+        
+        try:
+            # Wait for the class dropdown to be available
+            self.page.wait_for_selector(class_selector, timeout=10000)
+            logger.info("✓ Class dropdown found")
+            
+            # Wait for the loading indicator to disappear
+            try:
+                # Look for loading indicator
+                loading_selector = '#select_clases_loading, .bm-loader'
+                if self.page.locator(loading_selector).count() > 0:
+                    logger.info("Waiting for classes to load...")
+                    self.page.wait_for_selector(loading_selector, state='hidden', timeout=10000)
+                    logger.info("✓ Loading complete")
+            except:
+                pass  # No loading indicator or already hidden
+            
+            # Wait a bit more for JavaScript to populate options
+            self.page.wait_for_timeout(3000)
+            
+            # Check if options are loaded by looking for options with value
+            max_retries = 5
+            for attempt in range(max_retries):
+                classes = self.page.evaluate('''
+                    (selector) => {
+                        const select = document.querySelector(selector);
+                        if (!select) return [];
+                        
+                        const options = Array.from(select.options);
+                        return options
+                            .map(opt => ({
+                                value: opt.value,
+                                text: opt.text.trim(),
+                                index: opt.index
+                            }))
+                            .filter(opt => 
+                                opt.text.length > 0 && 
+                                opt.value !== '' &&
+                                !opt.text.includes('Selecciona una clase') &&
+                                !opt.text.includes('Seleccionar') &&
+                                !opt.text.includes('Select')
+                            );
+                    }
+                ''', class_selector)
+                
+                if classes and len(classes) > 0:
+                    logger.info(f"✓ Found {len(classes)} classes for this date")
+                    # Log first few classes for debugging
+                    for i, c in enumerate(classes[:3]):
+                        logger.info(f"  - Class {i+1}: {c['text']}")
+                    if len(classes) > 3:
+                        logger.info(f"  ... and {len(classes) - 3} more")
+                    return classes
+                
+                logger.info(f"Attempt {attempt + 1}/{max_retries}: No classes found yet, waiting...")
+                self.page.wait_for_timeout(2000)
+            
+            logger.warning("No classes found after multiple retries")
+            
+            # Take screenshot for debugging
+            self.page.screenshot(
+                path=str(self.config.SCREENSHOTS_DIR / 'no_classes_found.png')
+            )
+            
+            # Get the HTML of the select to see what's there
+            select_html = self.page.evaluate('''
+                (selector) => {
+                    const select = document.querySelector(selector);
+                    return select ? select.innerHTML : 'SELECT NOT FOUND';
+                }
+            ''', class_selector)
+            logger.debug(f"Select HTML: {select_html[:500]}")
+            
+            return []
+            
+        except Exception as e:
+            logger.error(f"Error with class selector {class_selector}: {str(e)}")
+            self.page.screenshot(
+                path=str(self.config.SCREENSHOTS_DIR / 'class_selector_error.png')
+            )
+            return []
+        
+    def select_class_and_extract_reservations(self, class_info: Dict, date_str: str) -> Dict:
+        """
+        Select a class and extract all reservation data using the API endpoint
+        class_info: dict with 'value', 'text', 'index' keys
+        date_str: date in format "DD-MM-YYYY"
+        """
+        try:
+            logger.info(f"Selecting class: {class_info['text']}")
+            
+            # Extract class ID from the value (format: "104996-237092" or similar)
+            class_id = class_info.get('value', '')
+            
+            # Use the specific selector for the class dropdown
+            class_selector = '#clases'
+            
+            # Select the class from the dropdown
+            try:
+                self.page.wait_for_selector(class_selector, timeout=10000)
+                
+                # Select the class using the specific selector
+                class_selected = self.page.evaluate('''
+                    (classValue, selector) => {
+                        const select = document.querySelector(selector);
+                        if (!select) return null;
+                        
+                        const options = Array.from(select.options);
+                        const matchingOption = options.find(opt => 
+                            opt.value === classValue || 
+                            opt.text.trim() === classValue ||
+                            opt.text.trim().includes(classValue) ||
+                            classValue.includes(opt.text.trim())
+                        );
+                        
+                        if (matchingOption) {
+                            select.value = matchingOption.value;
+                            select.dispatchEvent(new Event('change', { bubbles: true }));
+                            select.dispatchEvent(new Event('input', { bubbles: true }));
+                            
+                            if (window.jQuery) {
+                                window.jQuery(select).trigger('change');
+                            }
+                            return matchingOption.value;
+                        }
+                        return null;
+                    }
+                ''', class_info['value'], class_selector)
+                
+                if class_selected:
+                    class_id = class_selected
+                    logger.info(f"Selected class, got ID: {class_id}")
+                else:
+                    # Try selecting by the value directly
+                    try:
+                        self.page.select_option(class_selector, class_info['value'])
+                        self.page.wait_for_timeout(1000)
+                        # Get the selected value
+                        class_id = self.page.evaluate('''
+                            (selector) => {
+                                const select = document.querySelector(selector);
+                                if (select && select.options[select.selectedIndex]) {
+                                    return select.options[select.selectedIndex].value;
+                                }
+                                return null;
+                            }
+                        ''', class_selector)
+                        if class_id:
+                            logger.info(f"Selected class via select_option, got ID: {class_id}")
+                    except Exception as e:
+                        logger.warning(f"Could not select class via select_option: {str(e)}")
+                        
+            except Exception as e:
+                logger.error(f"Error selecting class: {str(e)}")
+            
+            if not class_id:
+                logger.error(f"Could not determine class ID for: {class_info['text']}")
+                return {}
+            
+            # Wait a bit for the page to process the selection
+            self.page.wait_for_timeout(2000)
+            
+            # Make API call directly to get the reservation data
+            api_url = f"https://boxmagic.cl/checkin/get_alumnos_clase/{class_id}?fecha_where={date_str}&method=alumnos"
+            logger.info(f"Fetching data from API: {api_url}")
+            
+            try:
+                # Use page context to make the API call (to include cookies/auth)
+                response = self.page.request.get(api_url)
+                
+                if response.status != 200:
+                    logger.error(f"API call failed with status {response.status}")
+                    return {}
+                
+                data = response.json()
+                
+                if not data.get('success', False):
+                    logger.warning(f"API returned success=false for class {class_id}")
+                    return {
+                        'class': class_info['text'],
+                        'classId': class_id,
+                        'reservations': [],
+                        'totalReservations': 0,
+                        'extractedAt': datetime.now().isoformat(),
+                        'apiResponse': data
+                    }
+                
+                alumnos = data.get('alumnos', [])
+                logger.info(f"✓ Retrieved {len(alumnos)} reservations from API for class: {class_info['text']}")
+                
+                # Format the reservations data
+                formatted_reservations = []
+                for alumno in alumnos:
+                    formatted_reservations.append({
+                        'id': alumno.get('id'),
+                        'reserva_id': alumno.get('reserva_id'),
+                        'hash_reserva_id': alumno.get('hash_reserva_id'),
+                        'name': alumno.get('name', '').strip(),
+                        'last_name': alumno.get('last_name', '').strip(),
+                        'full_name': f"{alumno.get('name', '').strip()} {alumno.get('last_name', '').strip()}".strip(),
+                        'email': alumno.get('email'),
+                        'telefono': alumno.get('telefono'),
+                        'status': alumno.get('status'),
+                        'nombre_plan': alumno.get('nombre_plan'),
+                        'canal': alumno.get('canal'),
+                        'fecha_creacion': alumno.get('fecha_creacion'),
+                        'asistencia_confirmada': alumno.get('asistencia_confirmada', 0),
+                        'pago_pendiente': alumno.get('pago_pendiente', False),
+                        'form_asistencia_url': alumno.get('form_asistencia_url'),
+                        'mostrar_formulario': alumno.get('mostrar_formulario'),
+                        'rating': alumno.get('rating'),
+                        'imagen': alumno.get('imagen')
+                    })
+                
+                return {
+                    'class': class_info['text'],
+                    'classId': class_id,
+                    'reservations': formatted_reservations,
+                    'totalReservations': len(formatted_reservations),
+                    'limite': data.get('limite', 0),
+                    'clase_online': data.get('clase_online', 0),
+                    'clase_coach_id': data.get('clase_coach_id'),
+                    'extractedAt': datetime.now().isoformat()
+                }
+                
+            except Exception as api_error:
+                logger.error(f"Error calling API: {str(api_error)}")
+                return {}
+            
+        except Exception as e:
+            logger.error(f"Error extracting reservations for class {class_info.get('text', 'unknown')}: {str(e)}", exc_info=True)
+            return {}
+    
+    def scrape_checkin_for_date(self, date_str: str, navigate: bool = True) -> Dict:
+        """
+        Scrape all classes and their reservations for a specific date
+        date_str format: "DD-MM-YYYY"
+        navigate: If True, navigates to check-in page first. If False, assumes already on check-in page.
+        """
+        try:
+            logger.info(f"\n{'='*60}")
+            logger.info(f"Scraping check-in for date: {date_str}")
+            logger.info(f"{'='*60}\n")
+            
+            # Navigate to check-in page only if requested
+            if navigate:
+                logger.info(f"Navigating to check-in page: {self.config.CHECKIN_URL}")
+                self.page.goto(self.config.CHECKIN_URL, wait_until='networkidle')
+                
+                # Wait for page to load
+                self.page.wait_for_selector('.pace-done', timeout=self.config.TIMEOUT)
+                self.page.wait_for_timeout(2000)
+            
+            # Select the date
+            logger.info(f"Attempting to select date: {date_str}")
+            date_selected = self.select_date_on_checkin(date_str)
+            
+            if not date_selected:
+                logger.error(f"Failed to select date: {date_str}")
+                self.page.screenshot(
+                    path=str(self.config.SCREENSHOTS_DIR / f'date_selection_failed_{date_str.replace("-", "_")}.png'),
+                    full_page=True
+                )
+                return {}
+            
+            logger.info(f"✓ Date selected successfully: {date_str}")
+            
+            # Get available classes for this date
+            classes = self.get_available_classes_for_date()
+            
+            if not classes:
+                logger.warning(f"No classes found for date: {date_str}")
+                return {
+                    'date': date_str,
+                    'classes': {},
+                    'totalClasses': 0,
+                    'scrapedAt': datetime.now().isoformat()
+                }
+            
+            date_data = {
+                'date': date_str,
+                'classes': {},
+                'totalClasses': len(classes),
+                'scrapedAt': datetime.now().isoformat()
+            }
+            
+            # Process each class
+            for idx, class_info in enumerate(classes):
+                logger.info(f"\nProcessing class {idx + 1}/{len(classes)}: {class_info['text']}")
+                
+                class_data = self.select_class_and_extract_reservations(class_info, date_str)
+                
+                if class_data:
+                    date_data['classes'][class_info['text']] = class_data
+                    logger.info(f"✓ Completed: {class_data.get('totalReservations', 0)} reservations")
+                else:
+                    logger.error(f"✗ Failed to extract data for class: {class_info['text']}")
+                
+                # Small delay between classes
+                self.page.wait_for_timeout(1000)
+            
+            logger.info(f"\n✓ Completed scraping for date {date_str}: {len(date_data['classes'])} classes")
+            return date_data
+            
+        except Exception as e:
+            logger.error(f"Error scraping check-in for date {date_str}: {str(e)}")
+            self.page.screenshot(
+                path=str(self.config.SCREENSHOTS_DIR / f'checkin_error_{date_str.replace("-", "_")}.png')
+            )
+            return {}
+    
+    def scrape_checkin_all_dates(self, start_day: int = 17, end_day: int = 22, month: int = 11, year: int = 2025) -> Dict:
+        """
+        Scrape check-in data for all dates from start_day to end_day
+        Default: days 17-22 (6 days)
+        Navigates to CHECKIN_URL once at the beginning and stays on that page
+        Uses API endpoint to fetch reservation data directly
+        """
+        try:
+            logger.info(f"\n{'='*80}")
+            logger.info(f"Starting check-in scraping for dates {start_day}-{end_day} of {month}/{year}")
+            logger.info(f"{'='*80}\n")
+            
+            # Navigate to check-in page once at the beginning
+            logger.info(f"Navigating to check-in page: {self.config.CHECKIN_URL}")
+            try:
+                self.page.goto(self.config.CHECKIN_URL, wait_until='networkidle', timeout=60000)
+                logger.info(f"✓ Successfully navigated to {self.config.CHECKIN_URL}")
+            except Exception as e:
+                logger.error(f"Failed to navigate to check-in page: {str(e)}")
+                self.page.screenshot(path=str(self.config.SCREENSHOTS_DIR / 'navigation_error.png'))
+                raise
+            
+            # Verify we're on the correct page
+            current_url = self.page.url
+            logger.info(f"Current URL: {current_url}")
+            
+            if 'checkin' not in current_url.lower():
+                logger.warning(f"Warning: Current URL doesn't contain 'checkin'. Expected: {self.config.CHECKIN_URL}")
+            
+            # Wait for page to load - try multiple selectors
+            logger.info("Waiting for page to load...")
+            try:
+                self.page.wait_for_selector('.pace-done', timeout=self.config.TIMEOUT)
+                logger.info("✓ Page loaded (pace-done found)")
+            except:
+                logger.warning("pace-done selector not found, trying alternative wait...")
+                self.page.wait_for_load_state('networkidle', timeout=self.config.TIMEOUT)
+                logger.info("✓ Page loaded (networkidle)")
+            
+            self.page.wait_for_timeout(3000)  # Extra wait for dynamic content
+            
+            # Take screenshot to verify we're on the right page
+            self.page.screenshot(
+                path=str(self.config.SCREENSHOTS_DIR / 'checkin_page_loaded.png'),
+                full_page=True
+            )
+            logger.info("✓ Screenshot saved: checkin_page_loaded.png")
+            
+            all_data = {
+                'scrapedAt': datetime.now().isoformat(),
+                'dateRange': {
+                    'startDay': start_day,
+                    'endDay': end_day,
+                    'month': month,
+                    'year': year
+                },
+                'dates': {}
+            }
+            
+            # Process each date (without navigating again)
+            total_days = end_day - start_day + 1
+            for day in range(start_day, end_day + 1):
+                date_str = f"{day:02d}-{month:02d}-{year}"
+                logger.info(f"\n{'#'*80}")
+                logger.info(f"Processing date: {date_str} (Day {day - start_day + 1}/{total_days})")
+                logger.info(f"{'#'*80}\n")
+                
+                try:
+                    # Don't navigate again, we're already on the check-in page
+                    date_data = self.scrape_checkin_for_date(date_str, navigate=False)
+                except Exception as e:
+                    logger.error(f"Error processing date {date_str}: {str(e)}", exc_info=True)
+                    self.page.screenshot(
+                        path=str(self.config.SCREENSHOTS_DIR / f'error_date_{date_str.replace("-", "_")}.png')
+                    )
+                    date_data = {}
+                
+                if date_data:
+                    all_data['dates'][date_str] = date_data
+                    
+                    total_classes = date_data.get('totalClasses', 0)
+                    total_reservations = sum(
+                        class_data.get('totalReservations', 0)
+                        for class_data in date_data.get('classes', {}).values()
+                    )
+                    logger.info(f"✓ Date {date_str}: {total_classes} classes, {total_reservations} total reservations")
+                else:
+                    logger.error(f"✗ Failed to scrape date: {date_str}")
+                
+                # Delay between dates
+                self.page.wait_for_timeout(1000)
+            
+            # Calculate totals
+            total_dates = len(all_data['dates'])
+            total_classes = sum(
+                date_data.get('totalClasses', 0)
+                for date_data in all_data['dates'].values()
+            )
+            total_reservations = sum(
+                sum(class_data.get('totalReservations', 0)
+                    for class_data in date_data.get('classes', {}).values())
+                for date_data in all_data['dates'].values()
+            )
+            
+            all_data['summary'] = {
+                'totalDates': total_dates,
+                'totalClasses': total_classes,
+                'totalReservations': total_reservations
+            }
+            
+            logger.info(f"\n{'='*80}")
+            logger.info("CHECK-IN SCRAPING SUMMARY")
+            logger.info(f"{'='*80}")
+            logger.info(f"Total dates processed: {total_dates}")
+            logger.info(f"Total classes: {total_classes}")
+            logger.info(f"Total reservations: {total_reservations}")
+            logger.info(f"{'='*80}\n")
+            
+            return all_data
+            
+        except Exception as e:
+            logger.error(f"Error in scrape_checkin_all_dates: {str(e)}", exc_info=True)
+            return {}
+    
     def close(self):
         """Close browser and cleanup"""
         if self.page:

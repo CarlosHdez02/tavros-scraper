@@ -17,7 +17,7 @@ def setup_logging():
 
 def main():
     logger = setup_logging()
-    logger.info("Starting BoxMagic scraper with coach filtering...")
+    logger.info("Starting BoxMagic check-in scraper...")
     
     try:
         Config.validate()
@@ -25,38 +25,62 @@ def main():
         scraper = BoxMagicScraper(Config)
         scraper.start_browser(use_saved_session=True)
         
-        # Option 1: Get available coaches first
-        logger.info("Fetching available coaches...")
-        coaches = scraper.get_available_coaches()
-        logger.info(f"Available coaches: {coaches}")
+        # Verify browser is ready
+        if not scraper.page:
+            logger.error("Browser page not initialized!")
+            scraper.close()
+            return
         
-        # Option 2: Scrape for a specific coach
-        # Uncomment to scrape for one coach:
-        # target_coach = "César Toro"
-        # logger.info(f"Scraping calendar for coach: {target_coach}")
-        # calendar_data = scraper.scrape_calendar_with_details(coach_name=target_coach)
+        logger.info(f"Browser ready. Current URL: {scraper.page.url}")
         
-        # Option 3: Scrape for ALL coaches (recommended)
-        logger.info("Scraping calendar for ALL coaches...")
-        calendar_data = scraper.scrape_all_coaches()
+        # Scrape check-in data for dates 17-22
+        logger.info("\n" + "="*80)
+        logger.info("Starting check-in data scraping...")
+        logger.info("="*80 + "\n")
         
-        # Save data
+        try:
+            checkin_data = scraper.scrape_checkin_all_dates(
+                start_day=17,
+                end_day=22,
+                month=11,
+                year=2025
+            )
+        except Exception as e:
+            logger.error(f"Error in scrape_checkin_all_dates: {str(e)}", exc_info=True)
+            scraper.page.screenshot(path=str(Config.SCREENSHOTS_DIR / 'main_error.png'))
+            raise
+        
+        # Save check-in data
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        output_file = Config.DATA_DIR / f'calendar_by_coaches_{timestamp}.json'
+        checkin_output_file = Config.DATA_DIR / f'checkin_data_{timestamp}.json'
         
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(calendar_data, f, indent=2, ensure_ascii=False)
+        if not checkin_data:
+            logger.warning("No check-in data returned! Data might be empty.")
+            checkin_data = {'error': 'No data scraped', 'scrapedAt': datetime.now().isoformat()}
         
-        logger.info(f"Data saved to {output_file}")
+        with open(checkin_output_file, 'w', encoding='utf-8') as f:
+            json.dump(checkin_data, f, indent=2, ensure_ascii=False)
         
-        # Print summary
-        if 'coaches' in calendar_data:
-            logger.info("\n" + "="*60)
-            logger.info("SCRAPING SUMMARY")
-            logger.info("="*60)
-            for coach, data in calendar_data['coaches'].items():
-                logger.info(f"{coach}: {data.get('totalEvents', 0)} events")
-            logger.info("="*60 + "\n")
+        logger.info(f"Check-in data saved to {checkin_output_file}")
+        
+        # Print check-in summary
+        if checkin_data and 'summary' in checkin_data:
+            logger.info("\n" + "="*80)
+            logger.info("CHECK-IN SCRAPING SUMMARY")
+            logger.info("="*80)
+            summary = checkin_data['summary']
+            logger.info(f"Total dates: {summary.get('totalDates', 0)}")
+            logger.info(f"Total classes: {summary.get('totalClasses', 0)}")
+            logger.info(f"Total reservations: {summary.get('totalReservations', 0)}")
+            logger.info("="*80 + "\n")
+        elif checkin_data and 'dates' in checkin_data:
+            logger.info("\n" + "="*80)
+            logger.info("CHECK-IN SCRAPING SUMMARY")
+            logger.info("="*80)
+            logger.info(f"Total dates processed: {len(checkin_data.get('dates', {}))}")
+            logger.info("="*80 + "\n")
+        else:
+            logger.warning("No summary data available. Check the output file for details.")
         
         scraper.close()
         

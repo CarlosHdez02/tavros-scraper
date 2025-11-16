@@ -8,6 +8,7 @@ class Config:
     # URLs
     LOGIN_URL = os.getenv('LOGIN_URL', 'https://boxmagic.cl/login')
     CALENDAR_URL = os.getenv('CALENDAR_URL', 'https://boxmagic.cl/horarios/agenda_general')
+    CHECKIN_URL = os.getenv('CHECKIN_URL', 'https://boxmagic.cl/checkin/clases')
     
     # Credentials
     USERNAME = os.getenv('USERNAME')

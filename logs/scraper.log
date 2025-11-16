@@ -505,3 +505,649 @@ AttributeError: 'BoxMagicScraper' object has no attribute 'scrape_calendar'
 
 2025-11-14 23:02:40,191 - INFO - Browser closed
 2025-11-14 23:02:40,191 - INFO - Scraping completed successfully!
+2025-11-16 13:20:13,439 - INFO - Starting BoxMagic scraper with coach filtering...
+2025-11-16 13:20:13,440 - INFO - Starting browser...
+2025-11-16 13:20:15,421 - INFO - Using saved session...
+2025-11-16 13:20:16,809 - INFO - Logged in using saved session
+2025-11-16 13:20:16,810 - INFO - Browser started successfully
+2025-11-16 13:20:16,810 - INFO - Fetching available coaches...
+2025-11-16 13:20:16,810 - INFO - Navigating to calendar: https://boxmagic.cl/horarios/agenda_general
+2025-11-16 13:20:49,251 - ERROR - Error getting coaches: Page.wait_for_selector: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator(".pace-done") to be visible
+
+2025-11-16 13:20:49,367 - INFO - Available coaches: []
+2025-11-16 13:20:49,367 - INFO - Scraping calendar for ALL coaches...
+2025-11-16 13:20:49,367 - INFO - Navigating to calendar: https://boxmagic.cl/horarios/agenda_general
+2025-11-16 13:21:21,076 - INFO - Starting BoxMagic scraper with coach filtering...
+2025-11-16 13:21:21,076 - INFO - Starting browser...
+2025-11-16 13:21:22,681 - INFO - Using saved session...
+2025-11-16 13:21:23,488 - INFO - Logged in using saved session
+2025-11-16 13:21:23,488 - INFO - Browser started successfully
+2025-11-16 13:21:23,489 - INFO - Fetching available coaches...
+2025-11-16 13:21:23,489 - INFO - Navigating to calendar: https://boxmagic.cl/horarios/agenda_general
+2025-11-16 13:21:56,550 - INFO - Found 6 coaches: ['Instagram Live', 'Facebook Live', 'Youtube Live', 'Zoom', 'Google Meet', 'Otro']
+2025-11-16 13:21:56,551 - INFO - Available coaches: ['Instagram Live', 'Facebook Live', 'Youtube Live', 'Zoom', 'Google Meet', 'Otro']
+2025-11-16 13:21:56,551 - INFO - Scraping calendar for ALL coaches...
+2025-11-16 13:21:56,551 - INFO - Navigating to calendar: https://boxmagic.cl/horarios/agenda_general
+2025-11-16 13:22:02,728 - INFO - Found 6 coaches: ['Grupal', 'Semiprivado', 'Sesión Privada', 'Open Gym', 'Online Coaching Premium', 'Privadas Hector']
+2025-11-16 13:22:02,729 - INFO - 
+============================================================
+2025-11-16 13:22:02,729 - INFO - Processing coach: Grupal
+2025-11-16 13:22:02,729 - INFO - ============================================================
+
+2025-11-16 13:22:02,729 - INFO - Navigating to calendar: https://boxmagic.cl/horarios/agenda_general
+2025-11-16 13:22:06,548 - INFO - Waiting for calendar to load...
+2025-11-16 13:22:09,578 - INFO - Selecting coach: Grupal
+2025-11-16 13:22:09,578 - INFO - Step 1: Opening Profesor dropdown...
+2025-11-16 13:22:09,606 - ERROR - Failed to open dropdown
+2025-11-16 13:22:09,714 - ERROR - Failed to select coach: Grupal
+2025-11-16 13:22:09,715 - ERROR - ✗ Failed to scrape data for Grupal
+2025-11-16 13:22:09,715 - INFO - 
+============================================================
+2025-11-16 13:22:09,715 - INFO - Processing coach: Semiprivado
+2025-11-16 13:22:09,715 - INFO - ============================================================
+
+2025-11-16 13:22:09,715 - INFO - Navigating to calendar: https://boxmagic.cl/horarios/agenda_general
+2025-11-16 13:22:14,651 - INFO - Waiting for calendar to load...
+2025-11-16 13:23:54,707 - INFO - Starting BoxMagic check-in scraper...
+2025-11-16 13:23:54,708 - INFO - Starting browser...
+2025-11-16 13:23:56,358 - INFO - Using saved session...
+2025-11-16 13:23:57,266 - INFO - Logged in using saved session
+2025-11-16 13:23:57,266 - INFO - Browser started successfully
+2025-11-16 13:23:57,267 - INFO - 
+================================================================================
+2025-11-16 13:23:57,267 - INFO - Starting check-in data scraping...
+2025-11-16 13:23:57,267 - INFO - ================================================================================
+
+2025-11-16 13:23:57,267 - INFO - 
+================================================================================
+2025-11-16 13:23:57,267 - INFO - Starting check-in scraping for dates 17-23 of 11/2025
+2025-11-16 13:23:57,267 - INFO - ================================================================================
+
+2025-11-16 13:23:57,267 - INFO - Navigating to check-in page: https://boxmagic.cl/checkin/clases
+2025-11-16 13:24:29,520 - ERROR - Error in scrape_checkin_all_dates: Page.wait_for_selector: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator(".pace-done") to be visible
+Traceback (most recent call last):
+  File "/Users/carloshernandez/Desktop/scraper/src/scraper_playwright.py", line 966, in scrape_checkin_all_dates
+    self.page.wait_for_selector('.pace-done', timeout=self.config.TIMEOUT)
+  File "/Users/carloshernandez/Desktop/scraper/venv/lib/python3.9/site-packages/playwright/sync_api/_generated.py", line 8182, in wait_for_selector
+    self._sync(
+  File "/Users/carloshernandez/Desktop/scraper/venv/lib/python3.9/site-packages/playwright/_impl/_sync_base.py", line 115, in _sync
+    return task.result()
+  File "/Users/carloshernandez/Desktop/scraper/venv/lib/python3.9/site-packages/playwright/_impl/_page.py", line 422, in wait_for_selector
+    return await self._main_frame.wait_for_selector(**locals_to_params(locals()))
+  File "/Users/carloshernandez/Desktop/scraper/venv/lib/python3.9/site-packages/playwright/_impl/_frame.py", line 369, in wait_for_selector
+    await self._channel.send(
+  File "/Users/carloshernandez/Desktop/scraper/venv/lib/python3.9/site-packages/playwright/_impl/_connection.py", line 69, in send
+    return await self._connection.wrap_api_call(
+  File "/Users/carloshernandez/Desktop/scraper/venv/lib/python3.9/site-packages/playwright/_impl/_connection.py", line 559, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.TimeoutError: Page.wait_for_selector: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator(".pace-done") to be visible
+
+2025-11-16 13:24:29,524 - INFO - Check-in data saved to /Users/carloshernandez/Desktop/scraper/data/output/checkin_data_20251116_132429.json
+2025-11-16 13:24:29,701 - INFO - Browser closed
+2025-11-16 13:24:29,701 - INFO - Scraping completed successfully!
+2025-11-16 13:26:59,077 - INFO - Starting BoxMagic check-in scraper...
+2025-11-16 13:26:59,078 - INFO - Starting browser...
+2025-11-16 13:27:00,192 - INFO - Using saved session...
+2025-11-16 13:27:01,064 - INFO - Logged in using saved session
+2025-11-16 13:27:01,064 - INFO - Browser started successfully
+2025-11-16 13:27:01,064 - INFO - Browser ready. Current URL: about:blank
+2025-11-16 13:27:01,064 - INFO - 
+================================================================================
+2025-11-16 13:27:01,064 - INFO - Starting check-in data scraping...
+2025-11-16 13:27:01,064 - INFO - ================================================================================
+
+2025-11-16 13:27:01,064 - INFO - 
+================================================================================
+2025-11-16 13:27:01,064 - INFO - Starting check-in scraping for dates 17-23 of 11/2025
+2025-11-16 13:27:01,064 - INFO - ================================================================================
+
+2025-11-16 13:27:01,064 - INFO - Navigating to check-in page: https://boxmagic.cl/checkin/clases
+2025-11-16 13:27:03,128 - INFO - ✓ Successfully navigated to https://boxmagic.cl/checkin/clases
+2025-11-16 13:27:03,129 - INFO - Current URL: https://auth.boxmagic.cl/login/
+2025-11-16 13:27:03,129 - WARNING - Warning: Current URL doesn't contain 'checkin'. Expected: https://boxmagic.cl/checkin/clases
+2025-11-16 13:27:03,129 - INFO - Waiting for page to load...
+2025-11-16 13:27:20,382 - INFO - ✓ Page loaded (pace-done found)
+2025-11-16 13:27:23,509 - INFO - ✓ Screenshot saved: checkin_page_loaded.png
+2025-11-16 13:27:23,510 - INFO - 
+################################################################################
+2025-11-16 13:27:23,510 - INFO - Processing date: 17-11-2025 (Day 1/7)
+2025-11-16 13:27:23,510 - INFO - ################################################################################
+
+2025-11-16 13:27:23,510 - INFO - 
+============================================================
+2025-11-16 13:27:23,510 - INFO - Scraping check-in for date: 17-11-2025
+2025-11-16 13:27:23,510 - INFO - ============================================================
+
+2025-11-16 13:27:23,510 - INFO - Attempting to select date: 17-11-2025
+2025-11-16 13:27:23,510 - INFO - Selecting date: 17-11-2025
+2025-11-16 13:27:23,519 - INFO - ✓ Found date input with selector: input[name*="fecha"]
+2025-11-16 13:27:53,668 - ERROR - Error selecting date: Locator.clear: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("input[name*=\"fecha\"]").first
+    - locator resolved to <input required="" type="text" placeholder="01/08/1988" id="fecha_nacimiento_alumno" name="fecha_nacimiento_alumno" class="form-control form-control"/>
+    - fill("")
+  - attempting fill action
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+      - waiting 100ms
+    59 × waiting for element to be visible, enabled and editable
+       - element is not visible
+     - retrying fill action
+       - waiting 500ms
+
+2025-11-16 13:27:53,668 - ERROR - Failed to select date: 17-11-2025
+2025-11-16 13:27:53,779 - ERROR - ✗ Failed to scrape date: 17-11-2025
+2025-11-16 13:27:54,782 - INFO - 
+################################################################################
+2025-11-16 13:27:54,783 - INFO - Processing date: 18-11-2025 (Day 2/7)
+2025-11-16 13:27:54,783 - INFO - ################################################################################
+
+2025-11-16 13:27:54,783 - INFO - 
+============================================================
+2025-11-16 13:27:54,783 - INFO - Scraping check-in for date: 18-11-2025
+2025-11-16 13:27:54,783 - INFO - ============================================================
+
+2025-11-16 13:27:54,783 - INFO - Attempting to select date: 18-11-2025
+2025-11-16 13:27:54,783 - INFO - Selecting date: 18-11-2025
+2025-11-16 13:27:54,792 - INFO - ✓ Found date input with selector: input[name*="fecha"]
+2025-11-16 13:28:24,926 - ERROR - Error selecting date: Locator.clear: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("input[name*=\"fecha\"]").first
+    - locator resolved to <input required="" type="text" placeholder="01/08/1988" id="fecha_nacimiento_alumno" name="fecha_nacimiento_alumno" class="form-control form-control"/>
+    - fill("")
+  - attempting fill action
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+      - waiting 100ms
+    59 × waiting for element to be visible, enabled and editable
+       - element is not visible
+     - retrying fill action
+       - waiting 500ms
+
+2025-11-16 13:28:24,927 - ERROR - Failed to select date: 18-11-2025
+2025-11-16 13:28:25,060 - ERROR - ✗ Failed to scrape date: 18-11-2025
+2025-11-16 13:28:26,063 - INFO - 
+################################################################################
+2025-11-16 13:28:26,063 - INFO - Processing date: 19-11-2025 (Day 3/7)
+2025-11-16 13:28:26,063 - INFO - ################################################################################
+
+2025-11-16 13:28:26,063 - INFO - 
+============================================================
+2025-11-16 13:28:26,063 - INFO - Scraping check-in for date: 19-11-2025
+2025-11-16 13:28:26,063 - INFO - ============================================================
+
+2025-11-16 13:28:26,064 - INFO - Attempting to select date: 19-11-2025
+2025-11-16 13:28:26,064 - INFO - Selecting date: 19-11-2025
+2025-11-16 13:28:26,073 - INFO - ✓ Found date input with selector: input[name*="fecha"]
+2025-11-16 13:28:56,207 - ERROR - Error selecting date: Locator.clear: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("input[name*=\"fecha\"]").first
+    - locator resolved to <input required="" type="text" placeholder="01/08/1988" id="fecha_nacimiento_alumno" name="fecha_nacimiento_alumno" class="form-control form-control"/>
+    - fill("")
+  - attempting fill action
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+      - waiting 100ms
+    59 × waiting for element to be visible, enabled and editable
+       - element is not visible
+     - retrying fill action
+       - waiting 500ms
+
+2025-11-16 13:28:56,209 - ERROR - Failed to select date: 19-11-2025
+2025-11-16 13:28:56,353 - ERROR - ✗ Failed to scrape date: 19-11-2025
+2025-11-16 13:28:57,355 - INFO - 
+################################################################################
+2025-11-16 13:28:57,355 - INFO - Processing date: 20-11-2025 (Day 4/7)
+2025-11-16 13:28:57,355 - INFO - ################################################################################
+
+2025-11-16 13:28:57,355 - INFO - 
+============================================================
+2025-11-16 13:28:57,355 - INFO - Scraping check-in for date: 20-11-2025
+2025-11-16 13:28:57,355 - INFO - ============================================================
+
+2025-11-16 13:28:57,355 - INFO - Attempting to select date: 20-11-2025
+2025-11-16 13:28:57,355 - INFO - Selecting date: 20-11-2025
+2025-11-16 13:28:57,368 - INFO - ✓ Found date input with selector: input[name*="fecha"]
+2025-11-16 13:29:27,479 - ERROR - Error selecting date: Locator.clear: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("input[name*=\"fecha\"]").first
+    - locator resolved to <input required="" type="text" placeholder="01/08/1988" id="fecha_nacimiento_alumno" name="fecha_nacimiento_alumno" class="form-control form-control"/>
+    - fill("")
+  - attempting fill action
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+      - waiting 100ms
+    59 × waiting for element to be visible, enabled and editable
+       - element is not visible
+     - retrying fill action
+       - waiting 500ms
+
+2025-11-16 13:29:27,480 - ERROR - Failed to select date: 20-11-2025
+2025-11-16 13:29:27,595 - ERROR - ✗ Failed to scrape date: 20-11-2025
+2025-11-16 13:29:28,597 - INFO - 
+################################################################################
+2025-11-16 13:29:28,597 - INFO - Processing date: 21-11-2025 (Day 5/7)
+2025-11-16 13:29:28,597 - INFO - ################################################################################
+
+2025-11-16 13:29:28,597 - INFO - 
+============================================================
+2025-11-16 13:29:28,597 - INFO - Scraping check-in for date: 21-11-2025
+2025-11-16 13:29:28,597 - INFO - ============================================================
+
+2025-11-16 13:29:28,597 - INFO - Attempting to select date: 21-11-2025
+2025-11-16 13:29:28,597 - INFO - Selecting date: 21-11-2025
+2025-11-16 13:29:28,610 - INFO - ✓ Found date input with selector: input[name*="fecha"]
+2025-11-16 13:29:58,721 - ERROR - Error selecting date: Locator.clear: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("input[name*=\"fecha\"]").first
+    - locator resolved to <input required="" type="text" placeholder="01/08/1988" id="fecha_nacimiento_alumno" name="fecha_nacimiento_alumno" class="form-control form-control"/>
+    - fill("")
+  - attempting fill action
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+      - waiting 100ms
+    60 × waiting for element to be visible, enabled and editable
+       - element is not visible
+     - retrying fill action
+       - waiting 500ms
+
+2025-11-16 13:29:58,722 - ERROR - Failed to select date: 21-11-2025
+2025-11-16 13:29:58,827 - ERROR - ✗ Failed to scrape date: 21-11-2025
+2025-11-16 13:29:59,829 - INFO - 
+################################################################################
+2025-11-16 13:29:59,829 - INFO - Processing date: 22-11-2025 (Day 6/7)
+2025-11-16 13:29:59,829 - INFO - ################################################################################
+
+2025-11-16 13:29:59,829 - INFO - 
+============================================================
+2025-11-16 13:29:59,829 - INFO - Scraping check-in for date: 22-11-2025
+2025-11-16 13:29:59,829 - INFO - ============================================================
+
+2025-11-16 13:29:59,829 - INFO - Attempting to select date: 22-11-2025
+2025-11-16 13:29:59,829 - INFO - Selecting date: 22-11-2025
+2025-11-16 13:29:59,835 - INFO - ✓ Found date input with selector: input[name*="fecha"]
+2025-11-16 13:30:29,951 - ERROR - Error selecting date: Locator.clear: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("input[name*=\"fecha\"]").first
+    - locator resolved to <input required="" type="text" placeholder="01/08/1988" id="fecha_nacimiento_alumno" name="fecha_nacimiento_alumno" class="form-control form-control"/>
+    - fill("")
+  - attempting fill action
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+      - waiting 100ms
+    60 × waiting for element to be visible, enabled and editable
+       - element is not visible
+     - retrying fill action
+       - waiting 500ms
+
+2025-11-16 13:30:29,951 - ERROR - Failed to select date: 22-11-2025
+2025-11-16 13:30:30,062 - ERROR - ✗ Failed to scrape date: 22-11-2025
+2025-11-16 13:30:31,065 - INFO - 
+################################################################################
+2025-11-16 13:30:31,065 - INFO - Processing date: 23-11-2025 (Day 7/7)
+2025-11-16 13:30:31,065 - INFO - ################################################################################
+
+2025-11-16 13:30:31,065 - INFO - 
+============================================================
+2025-11-16 13:30:31,065 - INFO - Scraping check-in for date: 23-11-2025
+2025-11-16 13:30:31,065 - INFO - ============================================================
+
+2025-11-16 13:30:31,065 - INFO - Attempting to select date: 23-11-2025
+2025-11-16 13:30:31,065 - INFO - Selecting date: 23-11-2025
+2025-11-16 13:30:31,077 - INFO - ✓ Found date input with selector: input[name*="fecha"]
+2025-11-16 13:31:01,191 - ERROR - Error selecting date: Locator.clear: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("input[name*=\"fecha\"]").first
+    - locator resolved to <input required="" type="text" placeholder="01/08/1988" id="fecha_nacimiento_alumno" name="fecha_nacimiento_alumno" class="form-control form-control"/>
+    - fill("")
+  - attempting fill action
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+      - waiting 100ms
+    59 × waiting for element to be visible, enabled and editable
+       - element is not visible
+     - retrying fill action
+       - waiting 500ms
+
+2025-11-16 13:31:01,192 - ERROR - Failed to select date: 23-11-2025
+2025-11-16 13:31:01,290 - ERROR - ✗ Failed to scrape date: 23-11-2025
+2025-11-16 13:31:02,292 - INFO - 
+================================================================================
+2025-11-16 13:31:02,292 - INFO - CHECK-IN SCRAPING SUMMARY
+2025-11-16 13:31:02,292 - INFO - ================================================================================
+2025-11-16 13:31:02,292 - INFO - Total dates processed: 0
+2025-11-16 13:31:02,292 - INFO - Total classes: 0
+2025-11-16 13:31:02,292 - INFO - Total reservations: 0
+2025-11-16 13:31:02,292 - INFO - ================================================================================
+
+2025-11-16 13:31:02,294 - INFO - Check-in data saved to /Users/carloshernandez/Desktop/scraper/data/output/checkin_data_20251116_133102.json
+2025-11-16 13:31:02,294 - INFO - 
+================================================================================
+2025-11-16 13:31:02,294 - INFO - CHECK-IN SCRAPING SUMMARY
+2025-11-16 13:31:02,295 - INFO - ================================================================================
+2025-11-16 13:31:02,295 - INFO - Total dates: 0
+2025-11-16 13:31:02,295 - INFO - Total classes: 0
+2025-11-16 13:31:02,295 - INFO - Total reservations: 0
+2025-11-16 13:31:02,295 - INFO - ================================================================================
+
+2025-11-16 13:31:02,705 - INFO - Browser closed
+2025-11-16 13:31:02,705 - INFO - Scraping completed successfully!
+2025-11-16 13:45:15,516 - INFO - Starting BoxMagic check-in scraper...
+2025-11-16 13:45:15,517 - INFO - Starting browser...
+2025-11-16 13:45:17,310 - INFO - Using saved session...
+2025-11-16 13:45:18,589 - INFO - Logged in using saved session
+2025-11-16 13:45:18,590 - INFO - Browser started successfully
+2025-11-16 13:45:18,590 - INFO - Browser ready. Current URL: about:blank
+2025-11-16 13:45:18,590 - INFO - 
+================================================================================
+2025-11-16 13:45:18,590 - INFO - Starting check-in data scraping...
+2025-11-16 13:45:18,590 - INFO - ================================================================================
+
+2025-11-16 13:45:18,590 - INFO - 
+================================================================================
+2025-11-16 13:45:18,590 - INFO - Starting check-in scraping for dates 17-22 of 11/2025
+2025-11-16 13:45:18,590 - INFO - ================================================================================
+
+2025-11-16 13:45:18,590 - INFO - Navigating to check-in page: https://boxmagic.cl/checkin/clases
+2025-11-16 13:45:21,543 - INFO - ✓ Successfully navigated to https://boxmagic.cl/checkin/clases
+2025-11-16 13:45:21,544 - INFO - Current URL: https://auth.boxmagic.cl/login/
+2025-11-16 13:45:21,544 - WARNING - Warning: Current URL doesn't contain 'checkin'. Expected: https://boxmagic.cl/checkin/clases
+2025-11-16 13:45:21,544 - INFO - Waiting for page to load...
+2025-11-16 13:45:39,104 - INFO - ✓ Page loaded (pace-done found)
+2025-11-16 13:45:42,235 - INFO - ✓ Screenshot saved: checkin_page_loaded.png
+2025-11-16 13:45:42,236 - INFO - 
+################################################################################
+2025-11-16 13:45:42,236 - INFO - Processing date: 17-11-2025 (Day 1/6)
+2025-11-16 13:45:42,236 - INFO - ################################################################################
+
+2025-11-16 13:45:42,236 - INFO - 
+============================================================
+2025-11-16 13:45:42,236 - INFO - Scraping check-in for date: 17-11-2025
+2025-11-16 13:45:42,236 - INFO - ============================================================
+
+2025-11-16 13:45:42,236 - INFO - Attempting to select date: 17-11-2025
+2025-11-16 13:45:42,236 - INFO - Selecting date: 17-11-2025
+2025-11-16 13:45:42,245 - INFO - ✓ Found date input with selector: input[name*="fecha"]
+2025-11-16 13:46:12,517 - ERROR - Error selecting date: Locator.clear: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("input[name*=\"fecha\"]").first
+    - locator resolved to <input required="" type="text" placeholder="01/08/1988" id="fecha_nacimiento_alumno" name="fecha_nacimiento_alumno" class="form-control form-control"/>
+    - fill("")
+  - attempting fill action
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+      - waiting 100ms
+    59 × waiting for element to be visible, enabled and editable
+       - element is not visible
+     - retrying fill action
+       - waiting 500ms
+
+2025-11-16 13:46:12,518 - ERROR - Failed to select date: 17-11-2025
+2025-11-16 13:46:12,718 - ERROR - ✗ Failed to scrape date: 17-11-2025
+2025-11-16 13:46:13,722 - INFO - 
+################################################################################
+2025-11-16 13:46:13,723 - INFO - Processing date: 18-11-2025 (Day 2/6)
+2025-11-16 13:46:13,723 - INFO - ################################################################################
+
+2025-11-16 13:46:13,723 - INFO - 
+============================================================
+2025-11-16 13:46:13,723 - INFO - Scraping check-in for date: 18-11-2025
+2025-11-16 13:46:13,723 - INFO - ============================================================
+
+2025-11-16 13:46:13,723 - INFO - Attempting to select date: 18-11-2025
+2025-11-16 13:46:13,723 - INFO - Selecting date: 18-11-2025
+2025-11-16 13:46:13,739 - INFO - ✓ Found date input with selector: input[name*="fecha"]
+2025-11-16 13:46:43,886 - ERROR - Error selecting date: Locator.clear: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("input[name*=\"fecha\"]").first
+    - locator resolved to <input required="" type="text" placeholder="01/08/1988" id="fecha_nacimiento_alumno" name="fecha_nacimiento_alumno" class="form-control form-control"/>
+    - fill("")
+  - attempting fill action
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+      - waiting 100ms
+    59 × waiting for element to be visible, enabled and editable
+       - element is not visible
+     - retrying fill action
+       - waiting 500ms
+
+2025-11-16 13:46:43,887 - ERROR - Failed to select date: 18-11-2025
+2025-11-16 13:46:44,023 - ERROR - ✗ Failed to scrape date: 18-11-2025
+2025-11-16 13:46:45,026 - INFO - 
+################################################################################
+2025-11-16 13:46:45,026 - INFO - Processing date: 19-11-2025 (Day 3/6)
+2025-11-16 13:46:45,026 - INFO - ################################################################################
+
+2025-11-16 13:46:45,026 - INFO - 
+============================================================
+2025-11-16 13:46:45,026 - INFO - Scraping check-in for date: 19-11-2025
+2025-11-16 13:46:45,026 - INFO - ============================================================
+
+2025-11-16 13:46:45,026 - INFO - Attempting to select date: 19-11-2025
+2025-11-16 13:46:45,026 - INFO - Selecting date: 19-11-2025
+2025-11-16 13:46:45,036 - INFO - ✓ Found date input with selector: input[name*="fecha"]
+2025-11-16 13:47:15,147 - ERROR - Error selecting date: Locator.clear: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("input[name*=\"fecha\"]").first
+    - locator resolved to <input required="" type="text" placeholder="01/08/1988" id="fecha_nacimiento_alumno" name="fecha_nacimiento_alumno" class="form-control form-control"/>
+    - fill("")
+  - attempting fill action
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+      - waiting 100ms
+    59 × waiting for element to be visible, enabled and editable
+       - element is not visible
+     - retrying fill action
+       - waiting 500ms
+
+2025-11-16 13:47:15,147 - ERROR - Failed to select date: 19-11-2025
+2025-11-16 13:47:15,375 - ERROR - ✗ Failed to scrape date: 19-11-2025
+2025-11-16 13:47:16,378 - INFO - 
+################################################################################
+2025-11-16 13:47:16,378 - INFO - Processing date: 20-11-2025 (Day 4/6)
+2025-11-16 13:47:16,378 - INFO - ################################################################################
+
+2025-11-16 13:47:16,378 - INFO - 
+============================================================
+2025-11-16 13:47:16,379 - INFO - Scraping check-in for date: 20-11-2025
+2025-11-16 13:47:16,379 - INFO - ============================================================
+
+2025-11-16 13:47:16,379 - INFO - Attempting to select date: 20-11-2025
+2025-11-16 13:47:16,379 - INFO - Selecting date: 20-11-2025
+2025-11-16 13:47:16,390 - INFO - ✓ Found date input with selector: input[name*="fecha"]
+2025-11-16 13:48:47,382 - INFO - Starting BoxMagic check-in scraper...
+2025-11-16 13:48:47,383 - INFO - Starting browser...
+2025-11-16 13:48:49,021 - INFO - Using saved session...
+2025-11-16 13:48:49,834 - INFO - Logged in using saved session
+2025-11-16 13:48:49,834 - INFO - Browser started successfully
+2025-11-16 13:48:49,834 - INFO - Browser ready. Current URL: about:blank
+2025-11-16 13:48:49,834 - INFO - 
+================================================================================
+2025-11-16 13:48:49,834 - INFO - Starting check-in data scraping...
+2025-11-16 13:48:49,834 - INFO - ================================================================================
+
+2025-11-16 13:48:49,834 - INFO - 
+================================================================================
+2025-11-16 13:48:49,834 - INFO - Starting check-in scraping for dates 17-22 of 11/2025
+2025-11-16 13:48:49,834 - INFO - ================================================================================
+
+2025-11-16 13:48:49,834 - INFO - Navigating to check-in page: https://boxmagic.cl/checkin/clases
+2025-11-16 13:48:52,002 - INFO - ✓ Successfully navigated to https://boxmagic.cl/checkin/clases
+2025-11-16 13:48:52,002 - INFO - Current URL: https://auth.boxmagic.cl/login/
+2025-11-16 13:48:52,003 - WARNING - Warning: Current URL doesn't contain 'checkin'. Expected: https://boxmagic.cl/checkin/clases
+2025-11-16 13:48:52,003 - INFO - Waiting for page to load...
+2025-11-16 13:49:11,109 - INFO - ✓ Page loaded (pace-done found)
+2025-11-16 13:49:14,230 - INFO - ✓ Screenshot saved: checkin_page_loaded.png
+2025-11-16 13:49:14,230 - INFO - 
+################################################################################
+2025-11-16 13:49:14,230 - INFO - Processing date: 17-11-2025 (Day 1/6)
+2025-11-16 13:49:14,230 - INFO - ################################################################################
+
+2025-11-16 13:49:14,230 - INFO - 
+============================================================
+2025-11-16 13:49:14,230 - INFO - Scraping check-in for date: 17-11-2025
+2025-11-16 13:49:14,230 - INFO - ============================================================
+
+2025-11-16 13:49:14,230 - INFO - Attempting to select date: 17-11-2025
+2025-11-16 13:49:14,231 - INFO - Selecting date: 17-11-2025
+2025-11-16 13:49:14,235 - INFO - Found date input with selector: #class_date
+2025-11-16 13:49:14,235 - ERROR - Error with date selector #class_date: evaluate() takes from 2 to 3 positional arguments but 4 were given
+2025-11-16 13:49:14,235 - ERROR - Failed to select date: 17-11-2025
+2025-11-16 13:49:14,314 - ERROR - ✗ Failed to scrape date: 17-11-2025
+2025-11-16 13:49:15,318 - INFO - 
+################################################################################
+2025-11-16 13:49:15,319 - INFO - Processing date: 18-11-2025 (Day 2/6)
+2025-11-16 13:49:15,319 - INFO - ################################################################################
+
+2025-11-16 13:49:15,319 - INFO - 
+============================================================
+2025-11-16 13:49:15,319 - INFO - Scraping check-in for date: 18-11-2025
+2025-11-16 13:49:15,319 - INFO - ============================================================
+
+2025-11-16 13:49:15,319 - INFO - Attempting to select date: 18-11-2025
+2025-11-16 13:49:15,319 - INFO - Selecting date: 18-11-2025
+2025-11-16 13:49:15,330 - INFO - Found date input with selector: #class_date
+2025-11-16 13:49:15,330 - ERROR - Error with date selector #class_date: evaluate() takes from 2 to 3 positional arguments but 4 were given
+2025-11-16 13:49:15,330 - ERROR - Failed to select date: 18-11-2025
+2025-11-16 13:49:15,430 - ERROR - ✗ Failed to scrape date: 18-11-2025
+2025-11-16 13:49:16,433 - INFO - 
+################################################################################
+2025-11-16 13:49:16,434 - INFO - Processing date: 19-11-2025 (Day 3/6)
+2025-11-16 13:49:16,434 - INFO - ################################################################################
+
+2025-11-16 13:49:16,434 - INFO - 
+============================================================
+2025-11-16 13:49:16,434 - INFO - Scraping check-in for date: 19-11-2025
+2025-11-16 13:49:16,434 - INFO - ============================================================
+
+2025-11-16 13:49:16,434 - INFO - Attempting to select date: 19-11-2025
+2025-11-16 13:49:16,434 - INFO - Selecting date: 19-11-2025
+2025-11-16 13:49:16,444 - INFO - Found date input with selector: #class_date
+2025-11-16 13:49:16,444 - ERROR - Error with date selector #class_date: evaluate() takes from 2 to 3 positional arguments but 4 were given
+2025-11-16 13:49:16,445 - ERROR - Failed to select date: 19-11-2025
+2025-11-16 13:49:16,560 - ERROR - ✗ Failed to scrape date: 19-11-2025
+2025-11-16 13:49:17,562 - INFO - 
+################################################################################
+2025-11-16 13:49:17,562 - INFO - Processing date: 20-11-2025 (Day 4/6)
+2025-11-16 13:49:17,562 - INFO - ################################################################################
+
+2025-11-16 13:49:17,563 - INFO - 
+============================================================
+2025-11-16 13:49:17,563 - INFO - Scraping check-in for date: 20-11-2025
+2025-11-16 13:49:17,563 - INFO - ============================================================
+
+2025-11-16 13:49:17,563 - INFO - Attempting to select date: 20-11-2025
+2025-11-16 13:49:17,563 - INFO - Selecting date: 20-11-2025
+2025-11-16 13:49:17,570 - INFO - Found date input with selector: #class_date
+2025-11-16 13:49:17,570 - ERROR - Error with date selector #class_date: evaluate() takes from 2 to 3 positional arguments but 4 were given
+2025-11-16 13:49:17,570 - ERROR - Failed to select date: 20-11-2025
+2025-11-16 13:49:17,680 - ERROR - ✗ Failed to scrape date: 20-11-2025
+2025-11-16 13:49:18,683 - INFO - 
+################################################################################
+2025-11-16 13:49:18,683 - INFO - Processing date: 21-11-2025 (Day 5/6)
+2025-11-16 13:49:18,683 - INFO - ################################################################################
+
+2025-11-16 13:49:18,683 - INFO - 
+============================================================
+2025-11-16 13:49:18,684 - INFO - Scraping check-in for date: 21-11-2025
+2025-11-16 13:49:18,684 - INFO - ============================================================
+
+2025-11-16 13:49:18,684 - INFO - Attempting to select date: 21-11-2025
+2025-11-16 13:49:18,684 - INFO - Selecting date: 21-11-2025
+2025-11-16 13:49:18,695 - INFO - Found date input with selector: #class_date
+2025-11-16 13:49:18,695 - ERROR - Error with date selector #class_date: evaluate() takes from 2 to 3 positional arguments but 4 were given
+2025-11-16 13:49:18,695 - ERROR - Failed to select date: 21-11-2025
+2025-11-16 13:49:18,806 - ERROR - ✗ Failed to scrape date: 21-11-2025
+2025-11-16 13:49:19,811 - INFO - 
+################################################################################
+2025-11-16 13:49:19,811 - INFO - Processing date: 22-11-2025 (Day 6/6)
+2025-11-16 13:49:19,811 - INFO - ################################################################################
+
+2025-11-16 13:49:19,812 - INFO - 
+============================================================
+2025-11-16 13:49:19,812 - INFO - Scraping check-in for date: 22-11-2025
+2025-11-16 13:49:19,812 - INFO - ============================================================
+
+2025-11-16 13:49:19,812 - INFO - Attempting to select date: 22-11-2025
+2025-11-16 13:49:19,812 - INFO - Selecting date: 22-11-2025
+2025-11-16 13:49:19,823 - INFO - Found date input with selector: #class_date
+2025-11-16 13:49:19,823 - ERROR - Error with date selector #class_date: evaluate() takes from 2 to 3 positional arguments but 4 were given
+2025-11-16 13:49:19,823 - ERROR - Failed to select date: 22-11-2025
+2025-11-16 13:49:19,943 - ERROR - ✗ Failed to scrape date: 22-11-2025
+2025-11-16 13:49:20,949 - INFO - 
+================================================================================
+2025-11-16 13:49:20,949 - INFO - CHECK-IN SCRAPING SUMMARY
+2025-11-16 13:49:20,949 - INFO - ================================================================================
+2025-11-16 13:49:20,950 - INFO - Total dates processed: 0
+2025-11-16 13:49:20,951 - INFO - Total classes: 0
+2025-11-16 13:49:20,951 - INFO - Total reservations: 0
+2025-11-16 13:49:20,952 - INFO - ================================================================================
+
+2025-11-16 13:49:20,953 - INFO - Check-in data saved to /Users/carloshernandez/Desktop/scraper/data/output/checkin_data_20251116_134920.json
+2025-11-16 13:49:20,954 - INFO - 
+================================================================================
+2025-11-16 13:49:20,954 - INFO - CHECK-IN SCRAPING SUMMARY
+2025-11-16 13:49:20,955 - INFO - ================================================================================
+2025-11-16 13:49:20,955 - INFO - Total dates: 0
+2025-11-16 13:49:20,957 - INFO - Total classes: 0
+2025-11-16 13:49:20,957 - INFO - Total reservations: 0
+2025-11-16 13:49:20,957 - INFO - ================================================================================
+
+2025-11-16 13:49:21,415 - INFO - Browser closed
+2025-11-16 13:49:21,415 - INFO - Scraping completed successfully!

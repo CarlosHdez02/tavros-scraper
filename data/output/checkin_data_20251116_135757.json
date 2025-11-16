@@ -1,0 +1,52 @@
+{
+  "scrapedAt": "2025-11-16T13:57:15.360537",
+  "dateRange": {
+    "startDay": 17,
+    "endDay": 22,
+    "month": 11,
+    "year": 2025
+  },
+  "dates": {
+    "17-11-2025": {
+      "date": "17-11-2025",
+      "classes": {},
+      "totalClasses": 0,
+      "scrapedAt": "2025-11-16T13:57:21.411285"
+    },
+    "18-11-2025": {
+      "date": "18-11-2025",
+      "classes": {},
+      "totalClasses": 0,
+      "scrapedAt": "2025-11-16T13:57:28.492387"
+    },
+    "19-11-2025": {
+      "date": "19-11-2025",
+      "classes": {},
+      "totalClasses": 0,
+      "scrapedAt": "2025-11-16T13:57:35.529787"
+    },
+    "20-11-2025": {
+      "date": "20-11-2025",
+      "classes": {},
+      "totalClasses": 0,
+      "scrapedAt": "2025-11-16T13:57:42.657898"
+    },
+    "21-11-2025": {
+      "date": "21-11-2025",
+      "classes": {},
+      "totalClasses": 0,
+      "scrapedAt": "2025-11-16T13:57:49.702683"
+    },
+    "22-11-2025": {
+      "date": "22-11-2025",
+      "classes": {},
+      "totalClasses": 0,
+      "scrapedAt": "2025-11-16T13:57:56.745308"
+    }
+  },
+  "summary": {
+    "totalDates": 6,
+    "totalClasses": 0,
+    "totalReservations": 0
+  }
+}
