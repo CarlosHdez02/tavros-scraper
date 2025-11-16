@@ -1,0 +1,988 @@
+{
+  "events": [
+    {
+      "index": 0,
+      "text": "6:00 - 7:00Sesi&oacute;n grupal 6:00 am",
+      "startTime": "6:00",
+      "endTime": "7:00",
+      "style": "background-color: rgb(2, 177, 5); inset: 0px 0% -36px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Lunes",
+        "className": "Sesión grupal 6:00 am",
+        "program": "Grupal",
+        "startTime": "06:00",
+        "endTime": "07:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 1,
+      "text": "7:00 - 8:00Sesi&oacute;n grupal 7:00 am",
+      "startTime": "7:00",
+      "endTime": "8:00",
+      "style": "background-color: rgb(2, 177, 5); inset: 36px 0% -72px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Lunes",
+        "className": "Sesión grupal 7:00 am",
+        "program": "Grupal",
+        "startTime": "07:00",
+        "endTime": "08:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 2,
+      "text": "8:00 - 9:00Sesi&oacute;n grupal 8:00 am",
+      "startTime": "8:00",
+      "endTime": "9:00",
+      "style": "background-color: rgb(2, 177, 5); inset: 72px 0% -108px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Lunes",
+        "className": "Sesión grupal 8:00 am",
+        "program": "Grupal",
+        "startTime": "08:00",
+        "endTime": "09:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 3,
+      "text": "9:00 - 10:00Sesi&oacute;n grupal 9:00 am",
+      "startTime": "9:00",
+      "endTime": "10:00",
+      "style": "background-color: rgb(2, 177, 5); inset: 108px 0% -144px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Lunes",
+        "className": "Sesión grupal 9:00 am",
+        "program": "Grupal",
+        "startTime": "09:00",
+        "endTime": "10:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 4,
+      "text": "10:00 - 11:00Privadas Hector",
+      "startTime": "10:00",
+      "endTime": "11:00",
+      "style": "background-color: rgb(0, 0, 0); inset: 144px 0% -180px; z-index: 1; margin-right: 20px;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Lunes",
+        "className": "Privadas Hector",
+        "program": "Privadas Hector",
+        "startTime": "10:00",
+        "endTime": "11:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 5,
+      "text": "10:15 - 11:15Sesi&oacute;n semiprivada 10:15 am",
+      "startTime": "10:15",
+      "endTime": "11:15",
+      "style": "background-color: rgb(34, 199, 221); inset: 153px 0% -189px 50%; z-index: 2;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Lunes",
+        "className": "Sesión semiprivada 10:15 am",
+        "program": "Semiprivado",
+        "startTime": "10:15",
+        "endTime": "11:15",
+        "capacity": "5",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 7,
+      "text": "12:00 - 1:00Privadas Hector",
+      "startTime": "12:00",
+      "endTime": "1:00",
+      "style": "background-color: rgb(0, 0, 0); inset: 216px 0% -252px 50%; z-index: 2;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Lunes",
+        "className": "Privadas Hector",
+        "program": "Privadas Hector",
+        "startTime": "11:00",
+        "endTime": "00:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 8,
+      "text": "3:00 - 4:00Sesi&oacute;n privada 3:00 pm",
+      "startTime": "3:00",
+      "endTime": "4:00",
+      "style": "background-color: rgb(219, 191, 10); inset: 324px 0% -360px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Lunes",
+        "className": "Privadas Hector",
+        "program": "Privadas Hector",
+        "startTime": "12:00",
+        "endTime": "13:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 9,
+      "text": "4:00 - 5:00Sesi&oacute;n semiprivada 4:00 pm",
+      "startTime": "4:00",
+      "endTime": "5:00",
+      "style": "background-color: rgb(34, 199, 221); inset: 360px 0% -396px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Lunes",
+        "className": "Sesión privada 3:00 pm",
+        "program": "Sesión Privada",
+        "startTime": "15:00",
+        "endTime": "16:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 10,
+      "text": "5:00 - 6:00Sesi&oacute;n grupal 5:00 pm",
+      "startTime": "5:00",
+      "endTime": "6:00",
+      "style": "background-color: rgb(222, 23, 23); inset: 396px 0% -432px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Lunes",
+        "className": "Sesión semiprivada 4:00 pm",
+        "program": "Semiprivado",
+        "startTime": "16:00",
+        "endTime": "17:00",
+        "capacity": "5",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 11,
+      "text": "6:00 - 7:00Sesi&oacute;n grupal 6:00 pm",
+      "startTime": "6:00",
+      "endTime": "7:00",
+      "style": "background-color: rgb(222, 23, 23); inset: 432px 0% -468px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Lunes",
+        "className": "Sesión grupal 5:00 pm",
+        "program": "Grupal",
+        "startTime": "17:00",
+        "endTime": "18:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 12,
+      "text": "7:00 - 8:00Sesi&oacute;n grupal 7:00 pm",
+      "startTime": "7:00",
+      "endTime": "8:00",
+      "style": "background-color: rgb(222, 23, 23); inset: 468px 0% -504px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Lunes",
+        "className": "Sesión grupal 6:00 pm",
+        "program": "Grupal",
+        "startTime": "18:00",
+        "endTime": "19:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 13,
+      "text": "8:00 - 9:00Sesi&oacute;n grupal 8:00 pm",
+      "startTime": "8:00",
+      "endTime": "9:00",
+      "style": "background-color: rgb(222, 23, 23); inset: 504px 0% -540px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Lunes",
+        "className": "Sesión grupal 7:00 pm",
+        "program": "Grupal",
+        "startTime": "19:00",
+        "endTime": "20:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 14,
+      "text": "6:00 - 7:00Sesi&oacute;n privada 6:00 am",
+      "startTime": "6:00",
+      "endTime": "7:00",
+      "style": "background-color: rgb(219, 191, 10); inset: 0px 0% -36px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Lunes",
+        "className": "Sesión grupal 8:00 pm",
+        "program": "Grupal",
+        "startTime": "20:00",
+        "endTime": "21:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 15,
+      "text": "7:00 - 8:00Sesi&oacute;n semiprivada 7:00 am",
+      "startTime": "7:00",
+      "endTime": "8:00",
+      "style": "background-color: rgb(34, 199, 221); inset: 36px 0% -72px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Martes",
+        "className": "Sesión privada 6:00 am",
+        "program": "Sesión Privada",
+        "startTime": "06:00",
+        "endTime": "07:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 16,
+      "text": "8:00 - 9:00Sesi&oacute;n grupal 8:00 am",
+      "startTime": "8:00",
+      "endTime": "9:00",
+      "style": "background-color: rgb(218, 93, 191); inset: 72px 0% -108px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Martes",
+        "className": "Sesión semiprivada 7:00 am",
+        "program": "Semiprivado",
+        "startTime": "07:00",
+        "endTime": "08:00",
+        "capacity": "5",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 17,
+      "text": "6:00 - 7:00Sesi&oacute;n grupal 6:00 am",
+      "startTime": "6:00",
+      "endTime": "7:00",
+      "style": "background-color: rgb(2, 177, 5); inset: 0px 0% -36px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Martes",
+        "className": "Sesión grupal 8:00 am",
+        "program": "Grupal",
+        "startTime": "08:00",
+        "endTime": "09:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 18,
+      "text": "7:00 - 8:00Sesi&oacute;n grupal 7:00 am",
+      "startTime": "7:00",
+      "endTime": "8:00",
+      "style": "background-color: rgb(2, 177, 5); inset: 36px 0% -72px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Miércoles",
+        "className": "Sesión grupal 6:00 am",
+        "program": "Grupal",
+        "startTime": "06:00",
+        "endTime": "07:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 19,
+      "text": "8:00 - 9:00Sesi&oacute;n grupal 8:00 am",
+      "startTime": "8:00",
+      "endTime": "9:00",
+      "style": "background-color: rgb(2, 177, 5); inset: 72px 0% -108px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Miércoles",
+        "className": "Sesión grupal 7:00 am",
+        "program": "Grupal",
+        "startTime": "07:00",
+        "endTime": "08:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 20,
+      "text": "9:00 - 10:00Sesi&oacute;n grupal 9:00 am",
+      "startTime": "9:00",
+      "endTime": "10:00",
+      "style": "background-color: rgb(2, 177, 5); inset: 108px 0% -144px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Miércoles",
+        "className": "Sesión grupal 8:00 am",
+        "program": "Grupal",
+        "startTime": "08:00",
+        "endTime": "09:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 21,
+      "text": "10:00 - 11:00Privadas Hector",
+      "startTime": "10:00",
+      "endTime": "11:00",
+      "style": "background-color: rgb(0, 0, 0); inset: 144px 0% -180px; z-index: 1; margin-right: 20px;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Miércoles",
+        "className": "Sesión grupal 9:00 am",
+        "program": "Grupal",
+        "startTime": "09:00",
+        "endTime": "10:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 22,
+      "text": "10:15 - 11:15Sesi&oacute;n semiprivada 10:15 am",
+      "startTime": "10:15",
+      "endTime": "11:15",
+      "style": "background-color: rgb(34, 199, 221); inset: 153px 0% -189px 50%; z-index: 2;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Miércoles",
+        "className": "Privadas Hector",
+        "program": "Privadas Hector",
+        "startTime": "10:00",
+        "endTime": "11:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 24,
+      "text": "12:00 - 1:00Privadas Hector",
+      "startTime": "12:00",
+      "endTime": "1:00",
+      "style": "background-color: rgb(0, 0, 0); inset: 216px 0% -252px 50%; z-index: 2;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Miércoles",
+        "className": "Sesión semiprivada 10:15 am",
+        "program": "Semiprivado",
+        "startTime": "10:15",
+        "endTime": "11:15",
+        "capacity": "5",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 25,
+      "text": "3:00 - 4:00Sesi&oacute;n privada 3:00 pm",
+      "startTime": "3:00",
+      "endTime": "4:00",
+      "style": "background-color: rgb(219, 191, 10); inset: 324px 0% -360px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Miércoles",
+        "className": "Privadas Hector",
+        "program": "Privadas Hector",
+        "startTime": "11:00",
+        "endTime": "00:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 26,
+      "text": "4:00 - 5:00Sesi&oacute;n semiprivada 4:00 pm",
+      "startTime": "4:00",
+      "endTime": "5:00",
+      "style": "background-color: rgb(34, 199, 221); inset: 360px 0% -396px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Miércoles",
+        "className": "Privadas Hector",
+        "program": "Privadas Hector",
+        "startTime": "12:00",
+        "endTime": "13:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 27,
+      "text": "5:00 - 6:00Sesi&oacute;n grupal 5:00 pm",
+      "startTime": "5:00",
+      "endTime": "6:00",
+      "style": "background-color: rgb(222, 23, 23); inset: 396px 0% -432px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Miércoles",
+        "className": "Privadas Hector",
+        "program": "Privadas Hector",
+        "startTime": "12:00",
+        "endTime": "13:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 28,
+      "text": "6:00 - 7:00Sesi&oacute;n grupal 6:00 pm",
+      "startTime": "6:00",
+      "endTime": "7:00",
+      "style": "background-color: rgb(222, 23, 23); inset: 432px 0% -468px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Miércoles",
+        "className": "Privadas Hector",
+        "program": "Privadas Hector",
+        "startTime": "12:00",
+        "endTime": "13:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 29,
+      "text": "7:00 - 8:00Sesi&oacute;n grupal 7:00 pm",
+      "startTime": "7:00",
+      "endTime": "8:00",
+      "style": "background-color: rgb(222, 23, 23); inset: 468px 0% -504px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Miércoles",
+        "className": "Privadas Hector",
+        "program": "Privadas Hector",
+        "startTime": "12:00",
+        "endTime": "13:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 30,
+      "text": "8:00 - 9:00Sesi&oacute;n grupal 8:00 pm",
+      "startTime": "8:00",
+      "endTime": "9:00",
+      "style": "background-color: rgb(222, 23, 23); inset: 504px 0% -540px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Miércoles",
+        "className": "Sesión grupal 6:00 pm",
+        "program": "Grupal",
+        "startTime": "18:00",
+        "endTime": "19:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 31,
+      "text": "6:00 - 7:00Sesi&oacute;n privada 6:00 am",
+      "startTime": "6:00",
+      "endTime": "7:00",
+      "style": "background-color: rgb(219, 191, 10); inset: 0px 0% -36px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Miércoles",
+        "className": "Sesión grupal 7:00 pm",
+        "program": "Grupal",
+        "startTime": "19:00",
+        "endTime": "20:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 32,
+      "text": "7:00 - 8:00Sesi&oacute;n semiprivada 7:00 am",
+      "startTime": "7:00",
+      "endTime": "8:00",
+      "style": "background-color: rgb(34, 199, 221); inset: 36px 0% -72px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Miércoles",
+        "className": "Sesión grupal 8:00 pm",
+        "program": "Grupal",
+        "startTime": "20:00",
+        "endTime": "21:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 33,
+      "text": "8:00 - 9:00Sesi&oacute;n grupal 8:00 am",
+      "startTime": "8:00",
+      "endTime": "9:00",
+      "style": "background-color: rgb(218, 93, 191); inset: 72px 0% -108px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Jueves",
+        "className": "Sesión privada 6:00 am",
+        "program": "Sesión Privada",
+        "startTime": "06:00",
+        "endTime": "07:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 34,
+      "text": "5:30 - 6:30Sesi&oacute;n grupal 5:30 pm",
+      "startTime": "5:30",
+      "endTime": "6:30",
+      "style": "background-color: rgb(218, 93, 191); inset: 414px 0% -450px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Jueves",
+        "className": "Sesión semiprivada 7:00 am",
+        "program": "Semiprivado",
+        "startTime": "07:00",
+        "endTime": "08:00",
+        "capacity": "5",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 35,
+      "text": "6:00 - 7:00Sesi&oacute;n grupal 6:00 am",
+      "startTime": "6:00",
+      "endTime": "7:00",
+      "style": "background-color: rgb(2, 177, 5); inset: 0px 0% -36px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Jueves",
+        "className": "Sesión grupal 8:00 am",
+        "program": "Grupal",
+        "startTime": "08:00",
+        "endTime": "09:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 36,
+      "text": "7:00 - 8:00Sesi&oacute;n grupal 7:00 am",
+      "startTime": "7:00",
+      "endTime": "8:00",
+      "style": "background-color: rgb(2, 177, 5); inset: 36px 0% -72px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Jueves",
+        "className": "Sesión grupal 5:30 pm",
+        "program": "Grupal",
+        "startTime": "17:30",
+        "endTime": "18:30",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 37,
+      "text": "8:00 - 9:00Sesi&oacute;n grupal 8:00 am",
+      "startTime": "8:00",
+      "endTime": "9:00",
+      "style": "background-color: rgb(2, 177, 5); inset: 72px 0% -108px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Viernes",
+        "className": "Sesión grupal 6:00 am",
+        "program": "Grupal",
+        "startTime": "06:00",
+        "endTime": "07:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 38,
+      "text": "9:00 - 10:00Sesi&oacute;n grupal 9:00 am",
+      "startTime": "9:00",
+      "endTime": "10:00",
+      "style": "background-color: rgb(2, 177, 5); inset: 108px 0% -144px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Viernes",
+        "className": "Sesión grupal 7:00 am",
+        "program": "Grupal",
+        "startTime": "07:00",
+        "endTime": "08:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 39,
+      "text": "10:00 - 11:00Privadas Hector",
+      "startTime": "10:00",
+      "endTime": "11:00",
+      "style": "background-color: rgb(0, 0, 0); inset: 144px 0% -180px; z-index: 1; margin-right: 20px;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Viernes",
+        "className": "Sesión grupal 8:00 am",
+        "program": "Grupal",
+        "startTime": "08:00",
+        "endTime": "09:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 40,
+      "text": "10:15 - 11:15Sesi&oacute;n semiprivada 10:15 am",
+      "startTime": "10:15",
+      "endTime": "11:15",
+      "style": "background-color: rgb(34, 199, 221); inset: 153px 0% -189px 50%; z-index: 2;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Viernes",
+        "className": "Sesión grupal 9:00 am",
+        "program": "Grupal",
+        "startTime": "09:00",
+        "endTime": "10:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 42,
+      "text": "12:00 - 1:00Privadas Hector",
+      "startTime": "12:00",
+      "endTime": "1:00",
+      "style": "background-color: rgb(0, 0, 0); inset: 216px 0% -252px 50%; z-index: 2;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Viernes",
+        "className": "Privadas Hector",
+        "program": "Privadas Hector",
+        "startTime": "10:00",
+        "endTime": "11:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 43,
+      "text": "3:00 - 4:00Sesi&oacute;n privada 3:00 pm",
+      "startTime": "3:00",
+      "endTime": "4:00",
+      "style": "background-color: rgb(219, 191, 10); inset: 324px 0% -360px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Viernes",
+        "className": "Sesión semiprivada 10:15 am",
+        "program": "Semiprivado",
+        "startTime": "10:15",
+        "endTime": "11:15",
+        "capacity": "5",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 44,
+      "text": "4:00 - 5:00Sesi&oacute;n semiprivada 4:00 pm",
+      "startTime": "4:00",
+      "endTime": "5:00",
+      "style": "background-color: rgb(34, 199, 221); inset: 360px 0% -396px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Viernes",
+        "className": "Privadas Hector",
+        "program": "Privadas Hector",
+        "startTime": "11:00",
+        "endTime": "00:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 45,
+      "text": "5:00 - 6:00Sesi&oacute;n grupal 5:00 pm",
+      "startTime": "5:00",
+      "endTime": "6:00",
+      "style": "background-color: rgb(222, 23, 23); inset: 396px 0% -432px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Viernes",
+        "className": "Privadas Hector",
+        "program": "Privadas Hector",
+        "startTime": "12:00",
+        "endTime": "13:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 46,
+      "text": "6:00 - 7:00Sesi&oacute;n grupal 6:00 pm",
+      "startTime": "6:00",
+      "endTime": "7:00",
+      "style": "background-color: rgb(222, 23, 23); inset: 432px 0% -468px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Viernes",
+        "className": "Sesión privada 3:00 pm",
+        "program": "Sesión Privada",
+        "startTime": "15:00",
+        "endTime": "16:00",
+        "capacity": "1",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 47,
+      "text": "7:00 - 8:00Sesi&oacute;n grupal 7:00 pm",
+      "startTime": "7:00",
+      "endTime": "8:00",
+      "style": "background-color: rgb(222, 23, 23); inset: 468px 0% -504px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Viernes",
+        "className": "Sesión semiprivada 4:00 pm",
+        "program": "Semiprivado",
+        "startTime": "16:00",
+        "endTime": "17:00",
+        "capacity": "5",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 48,
+      "text": "8:00 - 9:00Sesi&oacute;n semiprivada 8:00 am",
+      "startTime": "8:00",
+      "endTime": "9:00",
+      "style": "background-color: rgb(34, 199, 221); inset: 72px 0% -108px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Viernes",
+        "className": "Sesión semiprivada 4:00 pm",
+        "program": "Semiprivado",
+        "startTime": "16:00",
+        "endTime": "17:00",
+        "capacity": "5",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 49,
+      "text": "9:00 - 10:00Sesi&oacute;n grupal 9:00 am",
+      "startTime": "9:00",
+      "endTime": "10:00",
+      "style": "background-color: rgb(218, 93, 191); inset: 108px 0% -144px; z-index: 1;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Viernes",
+        "className": "Sesión grupal 6:00 pm",
+        "program": "Grupal",
+        "startTime": "18:00",
+        "endTime": "19:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 50,
+      "text": "10:15 - 11:15Privadas Hector",
+      "startTime": "10:15",
+      "endTime": "11:15",
+      "style": "background-color: rgb(0, 0, 0); inset: 153px 0% -189px; z-index: 1; margin-right: 20px;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Viernes",
+        "className": "Sesión grupal 7:00 pm",
+        "program": "Grupal",
+        "startTime": "19:00",
+        "endTime": "20:00",
+        "capacity": "11",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    },
+    {
+      "index": 51,
+      "text": "10:15 - 11:15Sesi&oacute;n privada 10:15 am",
+      "startTime": "10:15",
+      "endTime": "11:15",
+      "style": "background-color: rgb(219, 191, 10); inset: 153px 0% -189px 50%; z-index: 2;",
+      "hasTime": true,
+      "modalDetails": {
+        "day": "Sábado",
+        "className": "Sesión semiprivada 8:00 am",
+        "program": "Semiprivado",
+        "startTime": "08:00",
+        "endTime": "09:00",
+        "capacity": "5",
+        "trialClass": "No Acepta",
+        "onlineClass": "No",
+        "freeClass": "No",
+        "teachers": null
+      }
+    }
+  ],
+  "totalEvents": 49,
+  "pageTitle": "BoxMagic",
+  "url": "https://boxmagic.cl/horarios/agenda_general",
+  "scrapedAt": "2025-11-14T21:41:47.489876"
+}
