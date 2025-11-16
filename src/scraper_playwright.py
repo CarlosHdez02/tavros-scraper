@@ -10,6 +10,7 @@ from datetime import datetime
 import json
 import time
 import os
+import re
 logger = logging.getLogger(__name__)
 
 class BoxMagicScraper:
@@ -359,7 +360,7 @@ class BoxMagicScraper:
                         // It should have names or "Profesor" label
                         if (optionTexts.some(text => 
                             text.includes('Profesor') || 
-                            /[A-Z][a-z]+\s+[A-Z][a-z]+/.test(text) // Matches "FirstName LastName"
+                            re.match(r"[A-Z][a-z]+\s+[A-Z][a-z]+", text) // Matches "FirstName LastName"
                         )) {
                             // Return all non-empty options, excluding generic labels
                             return options

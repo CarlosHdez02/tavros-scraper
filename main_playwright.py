@@ -3,8 +3,10 @@ from src.scraper_playwright import BoxMagicScraper
 import logging
 import json
 from datetime import datetime
+import os
 
 def setup_logging():
+    os.makedirs("logs", exist_ok=True)
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',

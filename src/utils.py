@@ -2,8 +2,9 @@ import logging
 import time
 from functools import wraps
 from pathlib import Path
-
+import os
 def setup_logging(log_file='logs/scraper.log'):
+    os.makedirs("logs", exist_ok=True)
     """Configure logging for the application"""
     log_path = Path(log_file)
     log_path.parent.mkdir(parents=True, exist_ok=True)
