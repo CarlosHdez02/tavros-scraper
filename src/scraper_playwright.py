@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 from datetime import datetime
 import json
 import time
-
+import os
 logger = logging.getLogger(__name__)
 
 class BoxMagicScraper:
@@ -269,13 +269,14 @@ class BoxMagicScraper:
     
     def start_browser(self, use_saved_session=True, auto_login=True):
         """Initialize browser and optionally login"""
+        is_render = os.getenv("RENDER", None) is not None
         logger.info("Starting browser...")
         self.playwright = sync_playwright().start()
         
         self.browser = self.playwright.chromium.launch(
-            headless=self.config.HEADLESS,
-            slow_mo=100
-        )
+        headless=True if is_render else self.config.HEADLESS,
+        slow_mo=0 if is_render else 100
+    )
         
         session_file = self.config.BASE_DIR / 'session.json'
         storage_state = None
