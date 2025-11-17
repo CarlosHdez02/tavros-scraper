@@ -5,7 +5,7 @@ source venv/bin/activate
 
 # Start API server
 python api_server.py
-
+pip playwright install --with-deps
 
 # ========================================
 # Environment Variables (.env file)

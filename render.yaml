@@ -10,7 +10,7 @@ services:
     buildCommand: |
       mkdir -p logs
       pip install -r requirements.txt
-      python -m playwright install-deps
-      python -m playwright install chromium
+      python3 -m playwright install-deps
+      python3 -m playwright install chromium
 
     startCommand: python main_checkin.py
