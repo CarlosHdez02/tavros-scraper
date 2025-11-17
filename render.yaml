@@ -10,6 +10,7 @@ services:
     buildCommand: |
       mkdir -p logs
       pip install -r requirements.txt
-      playwright install --with-deps
 
-    startCommand: python main_checkin.py
+    startCommand: |
+      playwright install --with-deps
+      python main_checkin.py
