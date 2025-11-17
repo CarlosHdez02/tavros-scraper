@@ -12,7 +12,7 @@ services:
       mkdir -p logs
       mkdir -p /opt/render/project/.pw-browsers
       pip install -r requirements.txt
-      PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/.pw-browsers playwright install chromium
+      PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/.pw-browsers playwright install
 
     startCommand: |
       python main_checkin.py
