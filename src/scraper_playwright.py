@@ -275,8 +275,8 @@ class BoxMagicScraper:
         self.playwright = sync_playwright().start()
         
         self.browser = self.playwright.chromium.launch(
-        headless=True if is_render else self.config.HEADLESS,
-        slow_mo=0 if is_render else 100
+        headless=True,
+        args=["--no-sandbox", "--disable-setuid-sandbox"]
     )
         
         session_file = self.config.BASE_DIR / 'session.json'

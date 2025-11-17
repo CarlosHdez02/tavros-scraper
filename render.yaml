@@ -6,11 +6,14 @@ services:
 
     envVars:
       PYTHON_VERSION: 3.11
+      PLAYWRIGHT_BROWSERS_PATH: "/opt/render/project/.playwright"
 
     buildCommand: |
       mkdir -p logs
+      mkdir -p /opt/render/project/.playwright
       pip install -r requirements.txt
-      python3 -m playwright install-deps
-      python3 -m playwright install chromium
+      PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/.playwright playwright install chromium
 
-    startCommand: python main_checkin.py
+    startCommand: |
+      PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/.playwright playwright install chromium
+      python main_checkin.py
