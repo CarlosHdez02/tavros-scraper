@@ -369,9 +369,9 @@ def setup_scheduler():
     # Schedule check-in scraping daily at 2 AM
     scheduler.add_job(
         func=run_checkin_scraper,
-        trigger=CronTrigger(hour=2, minute=0),
+        trigger=CronTrigger( minute='*/15'),
         id='checkin_scraper',
-        name='Daily check-in scraper',
+        name='Daily check-in scraper every 15 minutes',
         replace_existing=True
     )
     
