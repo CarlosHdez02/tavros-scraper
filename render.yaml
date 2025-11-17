@@ -3,9 +3,13 @@ services:
     name: checkin-scraper
     env: python
     plan: starter
-    buildCommand: |
-      pip install -r requirements.txt
-      python -m playwright install --with-deps 
-    startCommand: python main_checkin.py
+
     envVars:
       PYTHON_VERSION: 3.11
+
+    buildCommand: |
+      mkdir -p logs
+      pip install -r requirements.txt
+      playwright install --with-deps
+
+    startCommand: python main_checkin.py
