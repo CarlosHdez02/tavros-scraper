@@ -1,19 +1,12 @@
 services:
-  - type: worker
-    name: checkin-scraper
+  - type: web
+    name: scraper-api
     env: python
     plan: starter
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python api_server.py"
 
-    envVars:
-      PYTHON_VERSION: 3.11
-      PLAYWRIGHT_BROWSERS_PATH: "/opt/render/project/.pw-browsers"
-    RUN playwright install
-
-    buildCommand: |
-      mkdir -p logs
-      mkdir -p /opt/render/project/.pw-browsers
-      pip install -r requirements.txt
-      PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/.pw-browsers playwright install
-
-    startCommand: |
-      python main_checkin.py
+  - type: worker
+    name: scraper-worker
+    plan: starter
+    dockerfilePath: ./Dockerfile
