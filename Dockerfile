@@ -9,9 +9,6 @@ WORKDIR /app
 # Copy project files
 COPY . .
 
-# Create logs directory to avoid FileNotFoundError
-RUN mkdir -p logs
-
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -19,7 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN playwright install chromium
 
 # Install supervisor to run multiple processes
-RUN apt-get update && apt-get install -y supervisor
+RUN apt-get update && apt-get install -y supervisor && rm -rf /var/lib/apt/lists/*
 
 # Copy supervisord config
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -28,4 +25,5 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 EXPOSE 5000
 
 # Start supervisor (which starts both API + scraper)
-CMD ["/usr/bin/supervisord"]
+# Create logs directory at runtime in case working directory changes
+CMD mkdir -p logs && /usr/bin/supervisord

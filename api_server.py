@@ -12,6 +12,7 @@ import os
 from config.settings import Config
 from src.scraper_playwright import BoxMagicScraper
 
+os.makedirs("logs", exist_ok=True)
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
