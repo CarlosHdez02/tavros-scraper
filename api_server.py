@@ -27,36 +27,10 @@ logger = logging.getLogger(__name__)
 # Initialize Flask app
 app = Flask(__name__)
 
-# Configure CORS with whitelist for frontend
-FRONTEND_PORT = int(os.getenv('FRONTEND_PORT', 3000))
-FRONTEND_URL = os.getenv('FRONTEND_URL', f'http://localhost:{FRONTEND_PORT}')
+# Enable CORS for all origins (no restrictions)
+CORS(app)
 
-# Build allowed origins list
-ALLOWED_ORIGINS = [
-    FRONTEND_URL,
-    f'http://localhost:{FRONTEND_PORT}',
-    f'http://127.0.0.1:{FRONTEND_PORT}',
-    'https://tavros.vercel.app/'
-]
-
-# Add production URL if specified
-PRODUCTION_FRONTEND_URL = os.getenv('PRODUCTION_FRONTEND_URL')
-if PRODUCTION_FRONTEND_URL:
-    ALLOWED_ORIGINS.append(PRODUCTION_FRONTEND_URL)
-
-# Remove duplicates while preserving order
-ALLOWED_ORIGINS = list(dict.fromkeys(ALLOWED_ORIGINS))
-
-logger.info(f"CORS configured for origins: {ALLOWED_ORIGINS}")
-
-# Enable CORS with whitelist
-CORS(
-    app,
-    origins=[ALLOWED_ORIGINS, 'https://tavros.vercel.app/'],
-    methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allow_headers=['Content-Type', 'Authorization'],
-    supports_credentials=True
-)
+logger.info("CORS configured for all origins")
 
 # Global variables
 LATEST_CHECKIN_DATA = {}
@@ -368,12 +342,12 @@ def setup_scheduler():
     """Setup scheduled scraping"""
     scheduler = BackgroundScheduler()
     
-    # Schedule check-in scraping daily at 2 AM
+    # Schedule check-in scraping every 15 minutes
     scheduler.add_job(
         func=run_checkin_scraper,
-        trigger=CronTrigger( minute='*/15'),
+        trigger=CronTrigger(minute='*/15'),
         id='checkin_scraper',
-        name='Daily check-in scraper every 15 minutes',
+        name='Check-in scraper every 15 minutes',
         replace_existing=True
     )
     
@@ -394,10 +368,12 @@ def setup_scheduler():
         SCRAPING_STATUS['next_scheduled'] = str(jobs[0].next_run_time)
     
     logger.info("✓ Scheduler started")
-    logger.info(f"  - Check-in scraping: Daily at 2:00 AM")
+    logger.info(f"  - Check-in scraping: Every 15 minutes")
     logger.info(f"  - Calendar scraping: Daily at 3:00 AM")
     
     return scheduler
+
+
 if __name__ == '__main__':
     logger.info("="*80)
     logger.info("BoxMagic API Server Starting...")
@@ -409,16 +385,15 @@ if __name__ == '__main__':
     # Setup scheduler
     scheduler = setup_scheduler()
     
-    # Run initial scrape if no data exists (in background thread to not block server)
-    if not LATEST_CHECKIN_DATA:
-        logger.info("No existing data found, running initial scrape in background...")
-        initial_scrape_thread = threading.Thread(target=run_checkin_scraper, daemon=True)
-        initial_scrape_thread.start()
+    # Always run initial scrape on startup (in background thread)
+    logger.info("Running initial scrape on startup...")
+    initial_scrape_thread = threading.Thread(target=run_checkin_scraper, daemon=True)
+    initial_scrape_thread.start()
     
     # Start Flask server
     port = Config.PORT
     logger.info(f"\n✓ API Server running on http://localhost:{port}")
-    logger.info(f"✓ CORS enabled for frontend: {ALLOWED_ORIGINS}")
+    logger.info(f"✓ CORS enabled for all origins")
     logger.info("="*80 + "\n")
     
     try:
