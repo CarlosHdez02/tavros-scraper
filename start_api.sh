@@ -13,4 +13,4 @@ pip playwright install --with-deps
 # PORT=5000                    # Backend API port (default: 5000)
 # FRONTEND_PORT=3000           # Frontend port for CORS whitelist (default: 3000)
 # FRONTEND_URL=http://localhost:3000  # Full frontend URL (optional, auto-generated from FRONTEND_PORT)
-# PRODUCTION_FRONTEND_URL=https://yourdomain.com  # Production frontend URL (optional)
+# PRODUCTION_FRONTEND_URL=https://tavros.vercel.app/ # Production frontend URL (optional)

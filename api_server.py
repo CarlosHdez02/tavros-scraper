@@ -36,6 +36,7 @@ ALLOWED_ORIGINS = [
     FRONTEND_URL,
     f'http://localhost:{FRONTEND_PORT}',
     f'http://127.0.0.1:{FRONTEND_PORT}',
+    'https://tavros.vercel.app/'
 ]
 
 # Add production URL if specified
