@@ -52,7 +52,7 @@ logger.info(f"CORS configured for origins: {ALLOWED_ORIGINS}")
 # Enable CORS with whitelist
 CORS(
     app,
-    origins=ALLOWED_ORIGINS,
+    origins=[ALLOWED_ORIGINS, 'https://tavros.vercel.app/'],
     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allow_headers=['Content-Type', 'Authorization'],
     supports_credentials=True
