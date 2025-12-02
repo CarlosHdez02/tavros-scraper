@@ -12,8 +12,8 @@ COPY . .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright Chromium browser
-RUN playwright install chromium
+# Install Playwright Chromium browser with dependencies
+RUN playwright install --with-deps chromium
 
 # Install supervisor to run multiple processes
 RUN apt-get update && apt-get install -y supervisor && rm -rf /var/lib/apt/lists/*
@@ -21,9 +21,8 @@ RUN apt-get update && apt-get install -y supervisor && rm -rf /var/lib/apt/lists
 # Copy supervisord config
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Expose your API server port (modify if needed)
+# Expose your API server port
 EXPOSE 5000
 
-# Start supervisor (which starts both API + scraper)
-# Create logs directory at runtime in case working directory changes
+# Start supervisor
 CMD mkdir -p logs && /usr/bin/supervisord

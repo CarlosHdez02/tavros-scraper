@@ -207,6 +207,7 @@ def home():
             'GET /api/checkin': 'Get latest check-in data',
             'GET /api/checkin/<date>': 'Get check-in data for specific date (DD-MM-YYYY)',
             'GET /api/calendar': 'Get latest calendar/schedule data',
+            'GET /api/all-data': 'Get all scraped data (check-in + calendar)',
             'GET /api/status': 'Get scraping status',
             'POST /api/scrape/now': 'Trigger immediate scraping',
             'GET /health': 'Health check'
@@ -332,6 +333,35 @@ def trigger_scrape():
         'message': f'{scrape_type.capitalize()} scraping started',
         'status': SCRAPING_STATUS
     })
+
+
+@app.route('/api/all-data')
+def get_all_data():
+    """Get all scraped data (both check-in and calendar)"""
+    if not LATEST_CHECKIN_DATA and not LATEST_CALENDAR_DATA:
+        return jsonify({
+            'error': 'No data available',
+            'message': 'No data has been scraped yet'
+        }), 404
+    
+    response = {
+        'scrapedAt': datetime.now().isoformat(),
+        'status': SCRAPING_STATUS,
+        'data': {
+            'checkin': LATEST_CHECKIN_DATA if LATEST_CHECKIN_DATA else None,
+            'calendar': LATEST_CALENDAR_DATA if LATEST_CALENDAR_DATA else None
+        },
+        'summary': {
+            'checkin_available': bool(LATEST_CHECKIN_DATA),
+            'calendar_available': bool(LATEST_CALENDAR_DATA),
+            'total_dates': len(LATEST_CHECKIN_DATA.get('dates', {})) if LATEST_CHECKIN_DATA else 0,
+            'total_classes': LATEST_CHECKIN_DATA.get('summary', {}).get('totalClasses', 0) if LATEST_CHECKIN_DATA else 0,
+            'total_reservations': LATEST_CHECKIN_DATA.get('summary', {}).get('totalReservations', 0) if LATEST_CHECKIN_DATA else 0,
+            'total_calendar_events': len(LATEST_CALENDAR_DATA.get('events', [])) if LATEST_CALENDAR_DATA else 0
+        }
+    }
+    
+    return jsonify(response)
 
 
 # ========================================
