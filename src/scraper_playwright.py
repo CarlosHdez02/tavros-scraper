@@ -246,7 +246,7 @@ class BoxMagicScraper:
                 logger.info("✓ Login successful and navigated to application!")
                 
                 # Save session for future use
-                session_file = self.config.BASE_DIR / 'session.json'
+                session_file = self.config.DATA_DIR / 'session.json'
                 storage_state = self.context.storage_state()
                 with open(session_file, 'w') as f:
                     json.dump(storage_state, f, indent=2)
@@ -279,7 +279,7 @@ class BoxMagicScraper:
         args=["--no-sandbox", "--disable-setuid-sandbox"]
     )
         
-        session_file = self.config.BASE_DIR / 'session.json'
+        session_file = self.config.DATA_DIR / 'session.json'
         storage_state = None
         session_valid = False
         

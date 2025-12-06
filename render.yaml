@@ -22,10 +22,10 @@ services:
       - key: PRODUCTION_FRONTEND_URL
         sync: false
     plan: starter
-    buildCommand: "pip install -r requirements.txt && playwright install --with-deps"
-    startCommand: "python api_server.py"
+    buildCommand: "export PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/src/playwright-browsers && pip install -r requirements.txt && playwright install --with-deps"
+    startCommand: "export PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/src/playwright-browsers && python api_server.py"
 
-  - type: worker
-    name: scraper-worker
-    plan: starter
-    dockerfilePath: ./Dockerfile
+    disk:
+      name: scraper-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
