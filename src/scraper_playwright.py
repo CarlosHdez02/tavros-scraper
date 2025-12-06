@@ -272,6 +272,27 @@ class BoxMagicScraper:
         """Initialize browser and optionally login"""
         is_render = os.getenv("RENDER", None) is not None
         logger.info("Starting browser...")
+        # Force set the browsers path if on Render
+        if is_render:
+            project_root = os.getcwd()
+            custom_browsers_path = os.path.join(project_root, 'playwright-browsers')
+            
+            logger.info(f"Render environment detected. Forcing PLAYWRIGHT_BROWSERS_PATH to: {custom_browsers_path}")
+            os.environ['PLAYWRIGHT_BROWSERS_PATH'] = custom_browsers_path
+            
+            # Debug: Check if directory exists and list contents
+            if os.path.exists(custom_browsers_path):
+                logger.info(f"✓ Browser directory exists. Contents: {os.listdir(custom_browsers_path)}")
+            else:
+                logger.error(f"✗ Browser directory NOT FOUND at {custom_browsers_path}")
+                # Fallback: Check if it exists in the absolute path we used in render.yaml
+                abs_path = '/opt/render/project/src/playwright-browsers'
+                if os.path.exists(abs_path):
+                     logger.info(f"✓ Found at absolute path: {abs_path}")
+                     os.environ['PLAYWRIGHT_BROWSERS_PATH'] = abs_path
+                else:
+                     logger.error(f"✗ Browser directory also not found at {abs_path}")
+
         self.playwright = sync_playwright().start()
         
         self.browser = self.playwright.chromium.launch(
