@@ -4,7 +4,23 @@ services:
     env: python
     envVars:
       - key: PLAYWRIGHT_BROWSERS_PATH
-        value: playwright-browsers
+        value: /opt/render/project/src/playwright-browsers
+      - key: LOGIN_URL
+        sync: false
+      - key: CALENDAR_URL
+        sync: false
+      - key: CHECKIN_URL
+        sync: false
+      - key: USERNAME
+        sync: false
+      - key: PASSWORD
+        sync: false
+      - key: PORT
+        value: 4000
+      - key: FRONTEND_PORT
+        value: 3000
+      - key: PRODUCTION_FRONTEND_URL
+        sync: false
     plan: starter
     buildCommand: "pip install -r requirements.txt && playwright install --with-deps"
     startCommand: "python api_server.py"
