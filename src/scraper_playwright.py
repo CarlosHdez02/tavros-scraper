@@ -6,7 +6,7 @@
 from playwright.sync_api import sync_playwright, Page, TimeoutError
 import logging
 from typing import Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import time
 import os
@@ -1093,83 +1093,81 @@ class BoxMagicScraper:
                     logger.error(f"API request failed: {e}")
                     return None
 
-                # 1. Try with original date format (DD-MM-YYYY)
-                api_url = f"https://boxmagic.cl/checkin/get_alumnos_clase/{class_id}?fecha_where={date_str}&method=alumnos"
-                data = call_api(api_url)
-                
-                # 2. If empty or failed, try YYYY-MM-DD format
-                if not data or not data.get('success', False) or not data.get('alumnos', []):
-                    try:
-                        # Convert DD-MM-YYYY to YYYY-MM-DD
-                        date_obj = datetime.strptime(date_str, "%d-%m-%Y")
-                        date_iso = date_obj.strftime("%Y-%m-%d")
-                        
-                        logger.info(f"Retrying with ISO date format: {date_iso}")
-                        api_url_iso = f"https://boxmagic.cl/checkin/get_alumnos_clase/{class_id}?fecha_where={date_iso}&method=alumnos"
-                        data_iso = call_api(api_url_iso)
-                        
-                        if data_iso and data_iso.get('success', False) and data_iso.get('alumnos', []):
-                            logger.info("✓ ISO date format returned data!")
-                            data = data_iso
-                        else:
-                            logger.info("ISO date format also returned no data")
-                    except Exception as e:
-                        logger.warning(f"Date conversion failed: {e}")
+            # 1. Try with original date format (DD-MM-YYYY)
+            api_url = f"https://boxmagic.cl/checkin/get_alumnos_clase/{class_id}?fecha_where={date_str}&method=alumnos"
+            data = call_api(api_url)
+            
+            # 2. If empty or failed, try YYYY-MM-DD format
+            if not data or not data.get('success', False) or not data.get('alumnos', []):
+                try:
+                    # Convert DD-MM-YYYY to YYYY-MM-DD
+                    date_obj = datetime.strptime(date_str, "%d-%m-%Y")
+                    date_iso = date_obj.strftime("%Y-%m-%d")
+                    
+                    logger.info(f"Retrying with ISO date format: {date_iso}")
+                    api_url_iso = f"https://boxmagic.cl/checkin/get_alumnos_clase/{class_id}?fecha_where={date_iso}&method=alumnos"
+                    data_iso = call_api(api_url_iso)
+                    
+                    if data_iso and data_iso.get('success', False) and data_iso.get('alumnos', []):
+                        logger.info("✓ ISO date format returned data!")
+                        data = data_iso
+                    else:
+                        logger.info("ISO date format also returned no data")
+                except Exception as e:
+                    logger.warning(f"Date conversion failed: {e}")
 
-                if not data:
-                    logger.error("API call failed (None response)")
-                    return {}
-                
-                if not data.get('success', False):
-                    logger.warning(f"API returned success=false for class {class_id}. Full response: {data}")
-                    return {
-                        'class': class_info['text'],
-                        'classId': class_id,
-                        'reservations': [],
-                        'totalReservations': 0,
-                        'extractedAt': datetime.now().isoformat(),
-                        'apiResponse': data
-                    }
-                
-                alumnos = data.get('alumnos', [])
-                logger.info(f"✓ Retrieved {len(alumnos)} reservations from API for class: {class_info['text']}")
-                
-                # Format the reservations data
-                formatted_reservations = []
-                for alumno in alumnos:
-                    formatted_reservations.append({
-                        'id': alumno.get('id'),
-                        'reserva_id': alumno.get('reserva_id'),
-                        'hash_reserva_id': alumno.get('hash_reserva_id'),
-                        'name': alumno.get('name', '').strip(),
-                        'last_name': alumno.get('last_name', '').strip(),
-                        'full_name': f"{alumno.get('name', '').strip()} {alumno.get('last_name', '').strip()}".strip(),
-                        'email': alumno.get('email'),
-                        'telefono': alumno.get('telefono'),
-                        'status': alumno.get('status'),
-                        'nombre_plan': alumno.get('nombre_plan'),
-                        'canal': alumno.get('canal'),
-                        'fecha_creacion': alumno.get('fecha_creacion'),
-                        'asistencia_confirmada': alumno.get('asistencia_confirmada', 0),
-                        'pago_pendiente': alumno.get('pago_pendiente', False),
-                        'form_asistencia_url': alumno.get('form_asistencia_url'),
-                        'mostrar_formulario': alumno.get('mostrar_formulario'),
-                        'rating': alumno.get('rating'),
-                        'imagen': alumno.get('imagen')
-                    })
-                
+            if not data:
+                logger.error("API call failed (None response)")
+                return {}
+            
+            if not data.get('success', False):
+                logger.warning(f"API returned success=false for class {class_id}. Full response: {data}")
                 return {
                     'class': class_info['text'],
                     'classId': class_id,
-                    'reservations': formatted_reservations,
-                    'totalReservations': len(formatted_reservations),
-                    'limite': data.get('limite', 0),
-                    'clase_online': data.get('clase_online', 0),
-                    'clase_coach_id': data.get('clase_coach_id'),
-                    'extractedAt': datetime.now().isoformat()
+                    'reservations': [],
+                    'totalReservations': 0,
+                    'extractedAt': datetime.now().isoformat(),
+                    'apiResponse': data
                 }
-                
-
+            
+            alumnos = data.get('alumnos', [])
+            logger.info(f"✓ Retrieved {len(alumnos)} reservations from API for class: {class_info['text']}")
+            
+            # Format the reservations data
+            formatted_reservations = []
+            for alumno in alumnos:
+                formatted_reservations.append({
+                    'id': alumno.get('id'),
+                    'reserva_id': alumno.get('reserva_id'),
+                    'hash_reserva_id': alumno.get('hash_reserva_id'),
+                    'name': alumno.get('name', '').strip(),
+                    'last_name': alumno.get('last_name', '').strip(),
+                    'full_name': f"{alumno.get('name', '').strip()} {alumno.get('last_name', '').strip()}".strip(),
+                    'email': alumno.get('email'),
+                    'telefono': alumno.get('telefono'),
+                    'status': alumno.get('status'),
+                    'nombre_plan': alumno.get('nombre_plan'),
+                    'canal': alumno.get('canal'),
+                    'fecha_creacion': alumno.get('fecha_creacion'),
+                    'asistencia_confirmada': alumno.get('asistencia_confirmada', 0),
+                    'pago_pendiente': alumno.get('pago_pendiente', False),
+                    'form_asistencia_url': alumno.get('form_asistencia_url'),
+                    'mostrar_formulario': alumno.get('mostrar_formulario'),
+                    'rating': alumno.get('rating'),
+                    'imagen': alumno.get('imagen')
+                })
+            
+            return {
+                'class': class_info['text'],
+                'classId': class_id,
+                'reservations': formatted_reservations,
+                'totalReservations': len(formatted_reservations),
+                'limite': data.get('limite', 0),
+                'clase_online': data.get('clase_online', 0),
+                'clase_coach_id': data.get('clase_coach_id'),
+                'extractedAt': datetime.now().isoformat()
+            }
             
         except Exception as e:
             logger.error(f"Error extracting reservations for class {class_info.get('text', 'unknown')}: {str(e)}", exc_info=True)
@@ -1253,16 +1251,22 @@ class BoxMagicScraper:
             )
             return {}
     
-    def scrape_checkin_all_dates(self, start_day: int = 17, end_day: int = 22, month: int = 11, year: int = 2025) -> Dict:
+    def scrape_checkin_all_dates(self, start_date: datetime = None, days_count: int = 7) -> Dict:
         """
-        Scrape check-in data for all dates from start_day to end_day
-        Default: days 17-22 (6 days)
+        Scrape check-in data for a range of dates
+        start_date: Starting date (default: today)
+        days_count: Number of days to scrape (default: 7)
         Navigates to CHECKIN_URL once at the beginning and stays on that page
         Uses API endpoint to fetch reservation data directly
         """
+        if start_date is None:
+            start_date = datetime.now()
+            
+        end_date = start_date + timedelta(days=days_count - 1)
+        
         try:
             logger.info(f"\n{'='*80}")
-            logger.info(f"Starting check-in scraping for dates {start_day}-{end_day} of {month}/{year}")
+            logger.info(f"Starting check-in scraping for {days_count} days: {start_date.strftime('%d-%m-%Y')} to {end_date.strftime('%d-%m-%Y')}")
             logger.info(f"{'='*80}\n")
             
             # Navigate to check-in page once at the beginning
@@ -1304,20 +1308,24 @@ class BoxMagicScraper:
             all_data = {
                 'scrapedAt': datetime.now().isoformat(),
                 'dateRange': {
-                    'startDay': start_day,
-                    'endDay': end_day,
-                    'month': month,
-                    'year': year
+                    'startDay': start_date.day,
+                    'endDay': end_date.day,
+                    'month': start_date.month,
+                    'year': start_date.year,
+                    'startDate': start_date.strftime('%d-%m-%Y'),
+                    'endDate': end_date.strftime('%d-%m-%Y'),
+                    'daysCount': days_count
                 },
                 'dates': {}
             }
             
             # Process each date (without navigating again)
-            total_days = end_day - start_day + 1
-            for day in range(start_day, end_day + 1):
-                date_str = f"{day:02d}-{month:02d}-{year}"
+            for i in range(days_count):
+                current_date = start_date + timedelta(days=i)
+                date_str = current_date.strftime('%d-%m-%Y')
+                
                 logger.info(f"\n{'#'*80}")
-                logger.info(f"Processing date: {date_str} (Day {day - start_day + 1}/{total_days})")
+                logger.info(f"Processing date: {date_str} (Day {i + 1}/{days_count})")
                 logger.info(f"{'#'*80}\n")
                 
                 try:

@@ -42,14 +42,17 @@ def main():
         logger.info(f"✓ Browser ready. Current URL: {scraper.page.url}")
         
         # Scrape check-in data for dates 17-22 November 2025
-        logger.info("\nStarting check-in data scraping for dates 17-22 Nov 2025...\n")
+        # Calculate date range (today + next 7 days)
+        today = datetime.now()
+        days_count = 7
+        
+        logger.info(f"Scraping {days_count} days starting from {today.strftime('%d-%m-%Y')}")
         
         try:
+            # Scrape check-in data
             checkin_data = scraper.scrape_checkin_all_dates(
-                start_day=17,
-                end_day=22,
-                month=11,
-                year=2025
+                start_date=today,
+                days_count=days_count
             )
         except Exception as e:
             logger.error(f"Error during scraping: {str(e)}", exc_info=True)

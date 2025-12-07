@@ -111,21 +111,16 @@ def run_checkin_scraper():
         # Restore original headless setting
         Config.HEADLESS = original_headless
         
-        # Calculate date range (today + next 6 days)
+        # Calculate date range (today + next 7 days)
         today = datetime.now()
-        start_day = today.day
-        end_day = (today + timedelta(days=6)).day
-        month = today.month
-        year = today.year
+        days_count = 7
         
-        logger.info(f"Scraping dates: {start_day}-{end_day}/{month}/{year}")
+        logger.info(f"Scraping {days_count} days starting from {today.strftime('%d-%m-%Y')}")
         
         # Scrape check-in data
         checkin_data = scraper.scrape_checkin_all_dates(
-            start_day=start_day,
-            end_day=end_day,
-            month=month,
-            year=year
+            start_date=today,
+            days_count=days_count
         )
         
         scraper.close()
