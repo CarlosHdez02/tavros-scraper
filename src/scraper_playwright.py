@@ -1071,22 +1071,57 @@ class BoxMagicScraper:
             # Wait a bit for the page to process the selection
             self.page.wait_for_timeout(2000)
             
-            # Make API call directly to get the reservation data
-            api_url = f"https://boxmagic.cl/checkin/get_alumnos_clase/{class_id}?fecha_where={date_str}&method=alumnos"
-            logger.info(f"Fetching data from API: {api_url}")
-            
-            try:
-                # Use page context to make the API call (to include cookies/auth)
-                response = self.page.request.get(api_url)
+                # Helper function to call API and check results
+                def call_api(url):
+                    logger.info(f"Fetching data from API: {url}")
+                    try:
+                        # Use page context to make the API call (to include cookies/auth)
+                        # Adding headers just in case, though page.request should handle cookies
+                        response = self.page.request.get(url, headers={
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json, text/javascript, */*; q=0.01'
+                        })
+                        
+                        logger.info(f"API Response Status: {response.status}")
+                        if response.status != 200:
+                            return None
+                        
+                        response_text = response.text()
+                        logger.debug(f"API Response Body: {response_text[:500]}...")
+                        return response.json()
+                    except Exception as e:
+                        logger.error(f"API request failed: {e}")
+                        return None
+
+                # 1. Try with original date format (DD-MM-YYYY)
+                api_url = f"https://boxmagic.cl/checkin/get_alumnos_clase/{class_id}?fecha_where={date_str}&method=alumnos"
+                data = call_api(api_url)
                 
-                if response.status != 200:
-                    logger.error(f"API call failed with status {response.status}")
+                # 2. If empty or failed, try YYYY-MM-DD format
+                if not data or not data.get('success', False) or not data.get('alumnos', []):
+                    try:
+                        # Convert DD-MM-YYYY to YYYY-MM-DD
+                        date_obj = datetime.strptime(date_str, "%d-%m-%Y")
+                        date_iso = date_obj.strftime("%Y-%m-%d")
+                        
+                        logger.info(f"Retrying with ISO date format: {date_iso}")
+                        api_url_iso = f"https://boxmagic.cl/checkin/get_alumnos_clase/{class_id}?fecha_where={date_iso}&method=alumnos"
+                        data_iso = call_api(api_url_iso)
+                        
+                        if data_iso and data_iso.get('success', False) and data_iso.get('alumnos', []):
+                            logger.info("✓ ISO date format returned data!")
+                            data = data_iso
+                        else:
+                            logger.info("ISO date format also returned no data")
+                    except Exception as e:
+                        logger.warning(f"Date conversion failed: {e}")
+
+                if not data:
+                    logger.error("API call failed (None response)")
                     return {}
                 
-                data = response.json()
-                
                 if not data.get('success', False):
-                    logger.warning(f"API returned success=false for class {class_id}")
+                    logger.warning(f"API returned success=false for class {class_id}. Full response: {data}")
                     return {
                         'class': class_info['text'],
                         'classId': class_id,
