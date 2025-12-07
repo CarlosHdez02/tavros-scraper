@@ -11,6 +11,7 @@ import json
 import time
 import os
 import re
+import subprocess
 logger = logging.getLogger(__name__)
 
 class BoxMagicScraper:
@@ -274,24 +275,23 @@ class BoxMagicScraper:
         logger.info("Starting browser...")
         # Force set the browsers path if on Render
         if is_render:
-            project_root = os.getcwd()
-            custom_browsers_path = os.path.join(project_root, 'playwright-browsers')
+            # Use persistent disk: /opt/render/project/src/data/playwright-browsers
+            # self.config.DATA_DIR is .../data/output, so we want .../data/playwright-browsers
+            persistent_browsers_path = self.config.DATA_DIR.parent / 'playwright-browsers'
             
-            logger.info(f"Render environment detected. Forcing PLAYWRIGHT_BROWSERS_PATH to: {custom_browsers_path}")
-            os.environ['PLAYWRIGHT_BROWSERS_PATH'] = custom_browsers_path
+            logger.info(f"Render environment detected. Setting PLAYWRIGHT_BROWSERS_PATH to persistent disk: {persistent_browsers_path}")
+            os.environ['PLAYWRIGHT_BROWSERS_PATH'] = str(persistent_browsers_path)
             
-            # Debug: Check if directory exists and list contents
-            if os.path.exists(custom_browsers_path):
-                logger.info(f"✓ Browser directory exists. Contents: {os.listdir(custom_browsers_path)}")
+            # Check if browsers are installed
+            if not persistent_browsers_path.exists() or not any(persistent_browsers_path.iterdir()):
+                logger.info("Browsers not found on persistent disk. Installing...")
+                try:
+                    subprocess.run(['playwright', 'install', 'chromium'], check=True)
+                    logger.info("✓ Browsers installed successfully to persistent disk")
+                except Exception as e:
+                    logger.error(f"Failed to install browsers: {e}")
             else:
-                logger.error(f"✗ Browser directory NOT FOUND at {custom_browsers_path}")
-                # Fallback: Check if it exists in the absolute path we used in render.yaml
-                abs_path = '/opt/render/project/src/playwright-browsers'
-                if os.path.exists(abs_path):
-                     logger.info(f"✓ Found at absolute path: {abs_path}")
-                     os.environ['PLAYWRIGHT_BROWSERS_PATH'] = abs_path
-                else:
-                     logger.error(f"✗ Browser directory also not found at {abs_path}")
+                logger.info("✓ Browsers found on persistent disk")
 
         self.playwright = sync_playwright().start()
         
