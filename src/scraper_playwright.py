@@ -1019,56 +1019,47 @@ class BoxMagicScraper:
             try:
                 self.page.wait_for_selector(class_selector, timeout=10000)
                 
-                # Select the class using the specific selector
-                class_selected = self.page.evaluate('''
-                    (classValue, selector) => {
-                        const select = document.querySelector(selector);
-                        if (!select) return null;
+                # Try standard Playwright select_option first (most reliable)
+                try:
+                    logger.info(f"Attempting to select class value: {class_info['value']}")
+                    self.page.select_option(class_selector, value=class_info['value'])
+                    self.page.wait_for_timeout(1000)
+                    
+                    # Verify selection
+                    selected_value = self.page.evaluate(f'document.querySelector("{class_selector}").value')
+                    if selected_value == class_info['value']:
+                        logger.info(f"✓ Successfully selected class via select_option: {class_id}")
+                    else:
+                        logger.warning(f"select_option seemed to fail. Expected {class_info['value']}, got {selected_value}")
+                        raise Exception("Selection verification failed")
                         
-                        const options = Array.from(select.options);
-                        const matchingOption = options.find(opt => 
-                            opt.value === classValue || 
-                            opt.text.trim() === classValue ||
-                            opt.text.trim().includes(classValue) ||
-                            classValue.includes(opt.text.trim())
-                        );
-                        
-                        if (matchingOption) {
-                            select.value = matchingOption.value;
+                except Exception as e:
+                    logger.warning(f"Standard select_option failed: {e}, trying JavaScript fallback...")
+                    
+                    # Fallback to JavaScript selection
+                    class_selected = self.page.evaluate('''
+                        (classValue, selector) => {
+                            const select = document.querySelector(selector);
+                            if (!select) return null;
+                            
+                            // Try setting value directly
+                            select.value = classValue;
+                            
+                            // Dispatch events
                             select.dispatchEvent(new Event('change', { bubbles: true }));
                             select.dispatchEvent(new Event('input', { bubbles: true }));
                             
                             if (window.jQuery) {
-                                window.jQuery(select).trigger('change');
+                                window.jQuery(select).val(classValue).trigger('change');
                             }
-                            return matchingOption.value;
+                            return select.value;
                         }
-                        return null;
-                    }
-                ''', class_info['value'], class_selector)
-                
-                if class_selected:
-                    class_id = class_selected
-                    logger.info(f"Selected class, got ID: {class_id}")
-                else:
-                    # Try selecting by the value directly
-                    try:
-                        self.page.select_option(class_selector, class_info['value'])
-                        self.page.wait_for_timeout(1000)
-                        # Get the selected value
-                        class_id = self.page.evaluate('''
-                            (selector) => {
-                                const select = document.querySelector(selector);
-                                if (select && select.options[select.selectedIndex]) {
-                                    return select.options[select.selectedIndex].value;
-                                }
-                                return null;
-                            }
-                        ''', class_selector)
-                        if class_id:
-                            logger.info(f"Selected class via select_option, got ID: {class_id}")
-                    except Exception as e:
-                        logger.warning(f"Could not select class via select_option: {str(e)}")
+                    ''', class_info['value'], class_selector)
+                    
+                    if class_selected == class_info['value']:
+                        logger.info(f"✓ Selected class via JavaScript fallback")
+                    else:
+                        logger.error("✗ All selection methods failed")
                         
             except Exception as e:
                 logger.error(f"Error selecting class: {str(e)}")
