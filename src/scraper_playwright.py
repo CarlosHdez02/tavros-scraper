@@ -1071,27 +1071,27 @@ class BoxMagicScraper:
             # Wait a bit for the page to process the selection
             self.page.wait_for_timeout(2000)
             
-                # Helper function to call API and check results
-                def call_api(url):
-                    logger.info(f"Fetching data from API: {url}")
-                    try:
-                        # Use page context to make the API call (to include cookies/auth)
-                        # Adding headers just in case, though page.request should handle cookies
-                        response = self.page.request.get(url, headers={
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json, text/javascript, */*; q=0.01'
-                        })
-                        
-                        logger.info(f"API Response Status: {response.status}")
-                        if response.status != 200:
-                            return None
-                        
-                        response_text = response.text()
-                        logger.debug(f"API Response Body: {response_text[:500]}...")
-                        return response.json()
-                    except Exception as e:
-                        logger.error(f"API request failed: {e}")
+            # Helper function to call API and check results
+            def call_api(url):
+                logger.info(f"Fetching data from API: {url}")
+                try:
+                    # Use page context to make the API call (to include cookies/auth)
+                    # Adding headers just in case, though page.request should handle cookies
+                    response = self.page.request.get(url, headers={
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json, text/javascript, */*; q=0.01'
+                    })
+                    
+                    logger.info(f"API Response Status: {response.status}")
+                    if response.status != 200:
                         return None
+                    
+                    response_text = response.text()
+                    logger.debug(f"API Response Body: {response_text[:500]}...")
+                    return response.json()
+                except Exception as e:
+                    logger.error(f"API request failed: {e}")
+                    return None
 
                 # 1. Try with original date format (DD-MM-YYYY)
                 api_url = f"https://boxmagic.cl/checkin/get_alumnos_clase/{class_id}?fecha_where={date_str}&method=alumnos"
@@ -1169,9 +1169,7 @@ class BoxMagicScraper:
                     'extractedAt': datetime.now().isoformat()
                 }
                 
-            except Exception as api_error:
-                logger.error(f"Error calling API: {str(api_error)}")
-                return {}
+
             
         except Exception as e:
             logger.error(f"Error extracting reservations for class {class_info.get('text', 'unknown')}: {str(e)}", exc_info=True)
