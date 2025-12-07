@@ -1193,8 +1193,27 @@ class BoxMagicScraper:
                 self.page.wait_for_selector('.pace-done', timeout=self.config.TIMEOUT)
                 self.page.wait_for_timeout(2000)
             
-            # Select the date
+            # Wait for date input
             logger.info(f"Attempting to select date: {date_str}")
+            
+            # If we are not on the check-in page, try to navigate there
+            if 'checkin' not in self.page.url.lower() and navigate:
+                logger.info("Not on check-in page, navigating...")
+                self.page.goto(self.config.CHECKIN_URL, wait_until='networkidle')
+            
+            logger.info(f"Selecting date: {date_str}")
+            
+            # Try to find the date picker with increased timeout
+            try:
+                # Wait for the input to be visible - increased timeout for Render
+                self.page.wait_for_selector('#class_date', state='visible', timeout=30000)
+                logger.info("Found date input with selector: #class_date")
+            except Exception as e:
+                logger.error(f"Error with date selector #class_date: {e}")
+                # Take screenshot for debugging
+                self.page.screenshot(path=str(self.config.SCREENSHOTS_DIR / f'date_selector_error_{date_str}.png'))
+                raise # Re-raise the exception if the selector isn't found
+            
             date_selected = self.select_date_on_checkin(date_str)
             
             if not date_selected:
@@ -1283,20 +1302,30 @@ class BoxMagicScraper:
             current_url = self.page.url
             logger.info(f"Current URL: {current_url}")
             
-            if 'checkin' not in current_url.lower():
+            # Check if we were redirected to login
+            if 'login' in current_url.lower():
+                logger.warning("Redirected to login page. Session might be invalid. Attempting re-login...")
+                if self.login():
+                    logger.info("✓ Re-login successful. Navigating back to check-in...")
+                    self.page.goto(self.config.CHECKIN_URL, wait_until='networkidle', timeout=60000)
+                else:
+                    raise Exception("Failed to login after redirect")
+
+            if 'checkin' not in self.page.url.lower():
                 logger.warning(f"Warning: Current URL doesn't contain 'checkin'. Expected: {self.config.CHECKIN_URL}")
             
             # Wait for page to load - try multiple selectors
             logger.info("Waiting for page to load...")
             try:
-                self.page.wait_for_selector('.pace-done', timeout=self.config.TIMEOUT)
+                # Increased timeout for Render
+                self.page.wait_for_selector('.pace-done', timeout=30000)
                 logger.info("✓ Page loaded (pace-done found)")
             except:
                 logger.warning("pace-done selector not found, trying alternative wait...")
-                self.page.wait_for_load_state('networkidle', timeout=self.config.TIMEOUT)
+                self.page.wait_for_load_state('networkidle', timeout=30000)
                 logger.info("✓ Page loaded (networkidle)")
             
-            self.page.wait_for_timeout(3000)  # Extra wait for dynamic content
+            self.page.wait_for_timeout(5000)  # Increased extra wait for dynamic content
             
             # Take screenshot to verify we're on the right page
             self.page.screenshot(
