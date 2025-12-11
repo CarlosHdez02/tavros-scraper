@@ -238,7 +238,7 @@ class BoxMagicScraper:
                 if admin_clicked:
                     # Wait for navigation after clicking Admin panel
                     self.page.wait_for_timeout(3000)
-                    self.page.wait_for_load_state('networkidle', timeout=10000)
+                    self.page.wait_for_load_state('networkidle', timeout=60000)
                     current_url = self.page.url
                     logger.info(f"Current URL after clicking Admin panel: {current_url}")
             
