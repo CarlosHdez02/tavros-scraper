@@ -117,10 +117,23 @@ def run_checkin_scraper():
         
         logger.info(f"Scraping {days_count} days starting from {today.strftime('%d-%m-%Y')}")
         
+        # Define callback for incremental saving
+        def on_progress(data):
+            global LATEST_CHECKIN_DATA
+            try:
+                # Update global data
+                LATEST_CHECKIN_DATA = data
+                # Save to file
+                save_data_to_file(data, LATEST_CHECKIN_FILE)
+                logger.info(f"✓ Progress saved: {len(data.get('dates', {}))} dates scraped")
+            except Exception as e:
+                logger.error(f"Error saving progress: {e}")
+
         # Scrape check-in data
         checkin_data = scraper.scrape_checkin_all_dates(
             start_date=today,
-            days_count=days_count
+            days_count=days_count,
+            on_progress=on_progress
         )
         
         scraper.close()

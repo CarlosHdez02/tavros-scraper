@@ -1173,11 +1173,12 @@ class BoxMagicScraper:
             logger.error(f"Error extracting reservations for class {class_info.get('text', 'unknown')}: {str(e)}", exc_info=True)
             return {}
     
-    def scrape_checkin_for_date(self, date_str: str, navigate: bool = True) -> Dict:
+    def scrape_checkin_for_date(self, date_str: str, navigate: bool = True, on_class_scraped=None) -> Dict:
         """
-        Scrape all classes and their reservations for a specific date
-        date_str format: "DD-MM-YYYY"
+        Scrape check-in data for a specific date
+        date_str: Date string in format "DD-MM-YYYY"
         navigate: If True, navigates to check-in page first. If False, assumes already on check-in page.
+        on_class_scraped: Optional callback function(date_str, class_data) called after each class is scraped
         """
         try:
             logger.info(f"\n{'='*60}")
@@ -1254,6 +1255,13 @@ class BoxMagicScraper:
                 if class_data:
                     date_data['classes'][class_info['text']] = class_data
                     logger.info(f"✓ Completed: {class_data.get('totalReservations', 0)} reservations")
+                    
+                    # Call per-class callback if provided
+                    if on_class_scraped:
+                        try:
+                            on_class_scraped(date_str, class_data)
+                        except Exception as e:
+                            logger.error(f"Error in per-class callback: {e}")
                 else:
                     logger.error(f"✗ Failed to extract data for class: {class_info['text']}")
                 
@@ -1270,11 +1278,12 @@ class BoxMagicScraper:
             )
             return {}
     
-    def scrape_checkin_all_dates(self, start_date: datetime = None, days_count: int = 7) -> Dict:
+    def scrape_checkin_all_dates(self, start_date: datetime = None, days_count: int = 7, on_progress=None) -> Dict:
         """
         Scrape check-in data for a range of dates
         start_date: Starting date (default: today)
         days_count: Number of days to scrape (default: 7)
+        on_progress: Optional callback function(data) called after each date is scraped
         Navigates to CHECKIN_URL once at the beginning and stays on that page
         Uses API endpoint to fetch reservation data directly
         """
@@ -1357,9 +1366,45 @@ class BoxMagicScraper:
                 logger.info(f"Processing date: {date_str} (Day {i + 1}/{days_count})")
                 logger.info(f"{'#'*80}\n")
                 
+                # Initialize date entry in all_data if not exists
+                if date_str not in all_data['dates']:
+                    all_data['dates'][date_str] = {
+                        'date': date_str,
+                        'classes': {},
+                        'totalClasses': 0,
+                        'scrapedAt': datetime.now().isoformat()
+                    }
+                
+                # Define per-class callback to update main data structure
+                def on_class_scraped_handler(d_str, c_data):
+                    if d_str in all_data['dates']:
+                        # Update class data
+                        all_data['dates'][d_str]['classes'][c_data['class']] = c_data
+                        
+                        # Update totals
+                        all_data['dates'][d_str]['totalClasses'] = len(all_data['dates'][d_str]['classes'])
+                        
+                        # Update summary
+                        all_data['summary'] = {
+                            'totalDates': len(all_data['dates']),
+                            'totalClasses': sum(d.get('totalClasses', 0) for d in all_data['dates'].values()),
+                            'totalReservations': sum(
+                                sum(c.get('totalReservations', 0) for c in d.get('classes', {}).values())
+                                for d in all_data['dates'].values()
+                            )
+                        }
+                        
+                        # Trigger main progress callback
+                        if on_progress:
+                            on_progress(all_data)
+
                 try:
                     # Don't navigate again, we're already on the check-in page
-                    date_data = self.scrape_checkin_for_date(date_str, navigate=False)
+                    date_data = self.scrape_checkin_for_date(
+                        date_str, 
+                        navigate=False,
+                        on_class_scraped=on_class_scraped_handler
+                    )
                 except Exception as e:
                     logger.error(f"Error processing date {date_str}: {str(e)}", exc_info=True)
                     self.page.screenshot(
@@ -1376,6 +1421,24 @@ class BoxMagicScraper:
                         for class_data in date_data.get('classes', {}).values()
                     )
                     logger.info(f"✓ Date {date_str}: {total_classes} classes, {total_reservations} total reservations")
+                    
+                    # Update summary for incremental saving (final update for date)
+                    all_data['summary'] = {
+                        'totalDates': len(all_data['dates']),
+                        'totalClasses': sum(d.get('totalClasses', 0) for d in all_data['dates'].values()),
+                        'totalReservations': sum(
+                            sum(c.get('totalReservations', 0) for c in d.get('classes', {}).values())
+                            for d in all_data['dates'].values()
+                        )
+                    }
+                    
+                    # Call progress callback if provided
+                    if on_progress:
+                        try:
+                            on_progress(all_data)
+                        except Exception as e:
+                            logger.error(f"Error in progress callback: {e}")
+                            
                 else:
                     logger.error(f"✗ Failed to scrape date: {date_str}")
                 
