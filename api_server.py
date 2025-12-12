@@ -413,6 +413,42 @@ def setup_scheduler():
     return scheduler
 
 
+def start_keep_alive():
+    """Ping the server itself to prevent sleeping on Free Tier"""
+    import requests
+    import time
+    
+    # Get external URL from Render environment
+    url = os.environ.get('RENDER_EXTERNAL_URL')
+    if not url:
+        logger.warning("RENDER_EXTERNAL_URL not found. Keep-alive disabled.")
+        return
+
+    # Ensure URL ends with /health
+    if not url.endswith('/'):
+        url += '/'
+    target_url = url + 'health'
+    
+    logger.info(f"Starting keep-alive pinger for {target_url}")
+    
+    def pinger():
+        while True:
+            try:
+                # Sleep for 14 minutes (Render sleeps after 15 mins inactivity)
+                time.sleep(14 * 60)
+                logger.info(f"Pinging {target_url} to keep alive...")
+                response = requests.get(target_url, timeout=10)
+                logger.info(f"Keep-alive ping status: {response.status_code}")
+            except Exception as e:
+                logger.error(f"Keep-alive ping failed: {e}")
+                # Wait a bit before retrying to avoid spamming logs if network is down
+                time.sleep(60)
+
+    # Start pinger in background thread
+    thread = threading.Thread(target=pinger, daemon=True)
+    thread.start()
+
+
 if __name__ == '__main__':
     logger.info("="*80)
     logger.info("BoxMagic API Server Starting...")
@@ -428,6 +464,9 @@ if __name__ == '__main__':
     logger.info("Running initial scrape on startup...")
     initial_scrape_thread = threading.Thread(target=run_checkin_scraper, daemon=True)
     initial_scrape_thread.start()
+    
+    # Start keep-alive pinger
+    start_keep_alive()
     
     # Start Flask server
     port = Config.PORT
