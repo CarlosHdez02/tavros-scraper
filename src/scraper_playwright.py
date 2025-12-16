@@ -12,6 +12,7 @@ import time
 import os
 import re
 import subprocess
+from zoneinfo import ZoneInfo
 logger = logging.getLogger(__name__)
 
 class BoxMagicScraper:
@@ -1278,17 +1279,20 @@ class BoxMagicScraper:
             )
             return {}
     
-    def scrape_checkin_all_dates(self, start_date: datetime = None, days_count: int = 7, on_progress=None) -> Dict:
+    def scrape_checkin_all_dates(self, start_date: datetime = None, days_count: int = 7, on_progress=None, existing_data: Dict = None) -> Dict:
         """
         Scrape check-in data for a range of dates
         start_date: Starting date (default: today)
         days_count: Number of days to scrape (default: 7)
         on_progress: Optional callback function(data) called after each date is scraped
+        existing_data: Optional dict containing previously scraped data to merge with
         Navigates to CHECKIN_URL once at the beginning and stays on that page
         Uses API endpoint to fetch reservation data directly
         """
         if start_date is None:
-            start_date = datetime.now()
+            # Use configured timezone for "today"
+            tz = ZoneInfo(self.config.TIMEZONE)
+            start_date = datetime.now(tz)
             
         end_date = start_date + timedelta(days=days_count - 1)
         
@@ -1356,6 +1360,11 @@ class BoxMagicScraper:
                 },
                 'dates': {}
             }
+
+            # Initialize with existing data if provided
+            if existing_data and existing_data.get('dates'):
+                logger.info(f"Initializing with existing data for {len(existing_data['dates'])} dates")
+                all_data['dates'] = existing_data['dates'].copy()
             
             # Process each date (without navigating again)
             for i in range(days_count):
@@ -1413,6 +1422,28 @@ class BoxMagicScraper:
                     date_data = {}
                 
                 if date_data:
+                    # Merge with existing data for this date if it exists
+                    if date_str in all_data['dates']:
+                        existing_date_data = all_data['dates'][date_str]
+                        existing_classes = existing_date_data.get('classes', {})
+                        new_classes = date_data.get('classes', {})
+                        
+                        # Start with existing classes
+                        merged_classes = existing_classes.copy()
+                        
+                        # Update with new classes (new data wins)
+                        merged_classes.update(new_classes)
+                        
+                        # Update date_data with merged classes
+                        date_data['classes'] = merged_classes
+                        date_data['totalClasses'] = len(merged_classes)
+                        
+                        # Recalculate total reservations for this date
+                        # Note: We don't have reservation counts for existing classes that weren't scraped this time
+                        # unless we preserved the whole object. Fortunately we did copy existing_classes.
+                        
+                        logger.info(f"Merged data for {date_str}: {len(existing_classes)} existing + {len(new_classes)} new -> {len(merged_classes)} total classes")
+                    
                     all_data['dates'][date_str] = date_data
                     
                     total_classes = date_data.get('totalClasses', 0)

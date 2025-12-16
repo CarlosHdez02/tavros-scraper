@@ -23,6 +23,7 @@ class Config:
     # Browser settings
     HEADLESS = False  # Set to True to hide browser
     TIMEOUT = 30000  # 30 seconds in milliseconds
+    TIMEZONE = os.getenv('TIMEZONE', 'America/Mexico_City')
     
     # API/Server settings
     PORT = int(os.getenv('PORT', 5000))

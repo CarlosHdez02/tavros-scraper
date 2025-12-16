@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 import threading
 import os
+from zoneinfo import ZoneInfo
 
 from config.settings import Config
 from src.scraper_playwright import BoxMagicScraper
@@ -112,7 +113,8 @@ def run_checkin_scraper():
         Config.HEADLESS = original_headless
         
         # Calculate date range (today + next 7 days)
-        today = datetime.now()
+        tz = ZoneInfo(Config.TIMEZONE)
+        today = datetime.now(tz)
         days_count = 7
         
         logger.info(f"Scraping {days_count} days starting from {today.strftime('%d-%m-%Y')}")
@@ -133,7 +135,8 @@ def run_checkin_scraper():
         checkin_data = scraper.scrape_checkin_all_dates(
             start_date=today,
             days_count=days_count,
-            on_progress=on_progress
+            on_progress=on_progress,
+            existing_data=LATEST_CHECKIN_DATA
         )
         
         scraper.close()
