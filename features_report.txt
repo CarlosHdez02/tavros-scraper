@@ -1,0 +1,61 @@
+DESGLOSE DE FUNCIONALIDADES Y TIEMPO INVERTIDO
+--------------------------------------------------
+
+A continuación se detalla el historial de tareas y funcionalidades trabajadas, junto con el tiempo aproximado transcurrido desde el inicio hasta la última modificación de cada sesión ("Duración de sesión").
+
+Nota: La "Duración de sesión" refleja el lapso de tiempo en el que la tarea estuvo activa, no necesariamente tiempo continuo de codificación.
+
+1. Corrección de Transición de Video en Carrusel
+   - Fechas: 06 Ene 2026 - 08 Ene 2026
+   - Duración aprox: ~2 días
+   - Descripción: Solución al problema de navegación manual en videos del carrusel que no respetaba la duración.
+
+2. Implementación de Controles de Vista de Carrusel
+   - Fechas: 02 Ene 2026 - 06 Ene 2026
+   - Duración aprox: ~3.5 días
+   - Descripción: Creación de botones Anterior/Siguiente para navegar entre vistas (Tabla, Video, Galería) manualmente.
+
+3. Inspección de Arquitectura del Código
+   - Fechas: 03 Ene 2026
+   - Duración aprox: ~2 horas
+   - Descripción: Revisión de prácticas de arquitectura en Next.js y estructura del proyecto.
+
+6. Depuración de Carga de Imágenes
+   - Fechas: 02 Ene 2026
+   - Duración aprox: ~1 min
+   - Descripción: Corrección rápida de rutas de imágenes en HTML estático.
+
+7. Mejoras de UI en Tabla
+   - Fechas: 30 Dic 2025
+   - Duración aprox: ~50 min
+   - Descripción: Ajustes de estilo en fecha/hora y eliminación de columnas innecesarias.
+
+8. Corrección de Corte de Datos (Scraper)
+   - Fechas: 16 Dic 2025
+   - Duración aprox: ~10 min
+   - Descripción: Ajuste de zona horaria y lógica de fusión de datos para evitar pérdida de clases pasadas.
+
+9. Centrado de Contenido (Sección Testimonios)
+   - Fechas: 14 Dic 2025
+   - Duración aprox: ~5 min
+   - Descripción: Ajustes CSS (flexbox) para centrar verticalmente el contenido.
+
+10. Visualización de Intervalo de Hora Actual
+    - Fechas: 14 Dic 2025
+    - Duración aprox: ~1 min
+    - Descripción: Mostrar intervalo actual (ej. 18:00 - 19:00) en tabla vacía en lugar de 00:00.
+
+11. Diseño y Espaciado de Sección Equipo
+    - Fechas: 14 Dic 2025
+    - Duración aprox: ~45 min
+    - Descripción: Ajustes de layout, espaciado vertical y posición de títulos en la sección "Team".
+
+12. Mejoras de Componente Tabla (General)
+    - Fechas: 07 Dic 2025 - 12 Dic 2025
+    - Duración aprox: ~5 días (lapso intermitente)
+    - Descripción: Fetching de datos en tiempo real, manejo de errores de API y estructura visual.
+
+13. Actualización de Datos en Tiempo Real (Scraper)
+    - Fechas: 06 Dic 2025 - 12 Dic 2025
+    - Duración aprox: ~6 días (lapso intermitente)
+    - Descripción: Optimización de despliegue en Render, selectores de Playwright y endpoints de API.

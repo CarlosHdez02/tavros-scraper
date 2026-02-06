@@ -1431,6 +1431,23 @@ class BoxMagicScraper:
                         # Start with existing classes
                         merged_classes = existing_classes.copy()
                         
+                        # 1. Identify all class IDs in the new data
+                        new_class_ids = set()
+                        for c_data in new_classes.values():
+                            if 'classId' in c_data and c_data['classId']:
+                                new_class_ids.add(c_data['classId'])
+                        
+                        # 2. Remove any existing classes that match these IDs (to handle renamed classes)
+                        # This prevents "Ghost" classes where the name changed but it's the same class
+                        keys_to_remove = []
+                        for name, c_data in merged_classes.items():
+                            if 'classId' in c_data and c_data['classId'] in new_class_ids:
+                                keys_to_remove.append(name)
+                        
+                        for key in keys_to_remove:
+                            del merged_classes[key]
+                            logger.info(f"Removed stale class entry '{key}' (replaced by new scrape with same ID)")
+                        
                         # Update with new classes (new data wins)
                         merged_classes.update(new_classes)
                         
