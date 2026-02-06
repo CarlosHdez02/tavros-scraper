@@ -1409,17 +1409,30 @@ class BoxMagicScraper:
 
                 try:
                     # Don't navigate again, we're already on the check-in page
+                    # First attempt: assume we are on the page
                     date_data = self.scrape_checkin_for_date(
                         date_str, 
                         navigate=False,
                         on_class_scraped=on_class_scraped_handler
                     )
                 except Exception as e:
-                    logger.error(f"Error processing date {date_str}: {str(e)}", exc_info=True)
-                    self.page.screenshot(
-                        path=str(self.config.SCREENSHOTS_DIR / f'error_date_{date_str.replace("-", "_")}.png')
-                    )
-                    date_data = {}
+                    logger.warning(f"Error processing date {date_str} on first attempt: {str(e)}")
+                    logger.info("Attempting retry with full navigation/refresh...")
+                    
+                    try:
+                        # Second attempt: force navigation to refresh state
+                        date_data = self.scrape_checkin_for_date(
+                            date_str, 
+                            navigate=True,
+                            on_class_scraped=on_class_scraped_handler
+                        )
+                        logger.info(f"✓ Retry successful for date {date_str}")
+                    except Exception as retry_e:
+                        logger.error(f"Error processing date {date_str} on retry: {str(retry_e)}", exc_info=True)
+                        self.page.screenshot(
+                            path=str(self.config.SCREENSHOTS_DIR / f'error_date_{date_str.replace("-", "_")}.png')
+                        )
+                        date_data = {}
                 
                 if date_data:
                     # Merge with existing data for this date if it exists
