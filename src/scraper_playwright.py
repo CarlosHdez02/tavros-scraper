@@ -914,163 +914,199 @@ class BoxMagicScraper:
             logger.error(f"Error with date selector {date_selector}: {str(e)}")
             return False
         
-    def get_available_classes_for_date(self) -> List[Dict]:
-        logger.info("Getting available classes for selected date...")
+    def _parse_classes_from_api_response(self, data) -> List[Dict]:
+        """Parse API response into list of {value, text, index} dicts."""
+        classes = []
+        if isinstance(data, list):
+            for i, item in enumerate(data):
+                if isinstance(item, dict):
+                    val = item.get('id') or item.get('value') or item.get('clase_id') or ''
+                    txt = item.get('text') or item.get('name') or item.get('nombre_clase') or item.get('label') or str(item)
+                    if val:
+                        classes.append({'value': str(val), 'text': str(txt).strip(), 'index': i})
+                elif isinstance(item, (str, int, float)):
+                    classes.append({'value': str(item), 'text': str(item), 'index': i})
+        elif isinstance(data, dict):
+            items = data.get('clases') or data.get('options') or data.get('data') or data.get('opciones') or []
+            for i, item in enumerate(items):
+                if isinstance(item, dict):
+                    val = item.get('id') or item.get('value') or item.get('clase_id') or ''
+                    txt = item.get('text') or item.get('name') or item.get('nombre_clase') or item.get('label') or str(item)
+                    if val:
+                        classes.append({'value': str(val), 'text': str(txt).strip(), 'index': i})
+            # Also check for key-value format: {"105112-237420": "Class Name"}
+            if not classes and data:
+                for k, v in data.items():
+                    if k not in ('success', 'error', 'message') and isinstance(v, str) and '-' in str(k):
+                        classes.append({'value': str(k), 'text': v.strip(), 'index': len(classes)})
+        elif isinstance(data, str) and '<option' in data:
+            # Parse HTML option elements
+            for m in re.finditer(r'<option\s+value=["\']([^"\']+)["\'][^>]*>([^<]*)</option>', data, re.I):
+                val, txt = m.group(1).strip(), m.group(2).strip()
+                if val and not any(skip in txt for skip in ('Selecciona', 'Seleccionar', 'Select')):
+                    classes.append({'value': val, 'text': txt, 'index': len(classes)})
+        return classes
+    
+    def get_classes_for_date_via_api(self, date_str: str) -> List[Dict]:
+        """
+        Get list of classes for a date by intercepting the API response when the date is selected.
+        Falls back to trying known API endpoint patterns. Avoids DOM-based class lookup.
+        Returns list of dicts: [{'value': class_id, 'text': class_name, 'index': i}, ...]
+        """
+        logger.info(f"Getting classes for date {date_str} via API...")
         
-        # Use the specific selector for the class dropdown
-        class_selector = '#clases'
+        captured_classes = []
         
-        try:
-            # Wait for the class dropdown to be available
-            self.page.wait_for_selector(class_selector, timeout=10000)
-            logger.info("✓ Class dropdown found")
-            
-            # Wait for the loading indicator to disappear
+        def handle_response(response):
             try:
-                # Look for loading indicator
-                loading_selector = '#select_clases_loading, .bm-loader'
-                if self.page.locator(loading_selector).count() > 0:
-                    logger.info("Waiting for classes to load...")
-                    self.page.wait_for_selector(loading_selector, state='hidden', timeout=10000)
-                    logger.info("✓ Loading complete")
-            except:
-                pass  # No loading indicator or already hidden
-            
-            # Wait a bit more for JavaScript to populate options
-            self.page.wait_for_timeout(3000)
-            
-            # Check if options are loaded by looking for options with value
-            max_retries = 5
-            for attempt in range(max_retries):
+                url = response.url
+                if 'get_alumnos_clase' in url:
+                    return
+                if 'boxmagic.cl/checkin' not in url:
+                    return
+                if response.status != 200:
+                    return
+                body = None
+                try:
+                    body = response.json()
+                except Exception:
+                    try:
+                        body = response.text()
+                    except Exception:
+                        return
+                parsed = self._parse_classes_from_api_response(body)
+                if parsed:
+                    captured_classes.extend(parsed)
+                    logger.info(f"Captured {len(parsed)} classes from API response: {url[:80]}...")
+            except Exception as e:
+                logger.debug(f"Error parsing response: {e}")
+        
+        # Listen for API responses when date is selected (captures classes endpoint)
+        self.page.on('response', handle_response)
+        try:
+            self.select_date_on_checkin(date_str)
+            # Wait for async requests to complete
+            self.page.wait_for_timeout(4000)
+        finally:
+            self.page.remove_listener('response', handle_response)
+        
+        if captured_classes:
+            seen = set()
+            unique = []
+            for c in captured_classes:
+                if c['value'] not in seen and c['value']:
+                    seen.add(c['value'])
+                    unique.append(c)
+            logger.info(f"✓ Found {len(unique)} classes via API interception")
+            return unique
+        
+        # Fallback: try direct API calls to common endpoint patterns
+        base_url = "https://boxmagic.cl"
+        endpoints_to_try = [
+            f"/checkin/get_clases?fecha_where={date_str}",
+            f"/checkin/clases_select?fecha_where={date_str}",
+            f"/checkin/get_opciones_clases?fecha_where={date_str}",
+        ]
+        
+        for path in endpoints_to_try:
+            try:
+                url = base_url + path
+                logger.info(f"Trying fallback API: {url}")
+                response = self.page.request.get(url, headers={
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json, text/javascript, */*; q=0.01'
+                })
+                if response.status != 200:
+                    continue
+                body = response.json()
+                parsed = self._parse_classes_from_api_response(body)
+                if parsed:
+                    logger.info(f"✓ Found {len(parsed)} classes via fallback API: {path}")
+                    return parsed
+            except Exception as e:
+                logger.debug(f"Fallback {path} failed: {e}")
+        
+        # Last resort: read from DOM (kept for backward compatibility if API shape differs)
+        logger.warning("API methods did not return classes, falling back to DOM read")
+        return self._get_classes_from_dom_fallback()
+    
+    def _get_classes_from_dom_fallback(self) -> List[Dict]:
+        """
+        Fallback: read class options from #clases dropdown by value (not labels).
+        Used when API interception and fallback APIs fail. Uses opt.value as class_id.
+        """
+        class_selector = '#clases'
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                self.page.wait_for_selector(class_selector, timeout=10000)
+                # Wait for loading indicator to disappear if present
+                try:
+                    loading = '#select_clases_loading, .bm-loader, [class*="loading"]'
+                    self.page.wait_for_selector(loading, state='hidden', timeout=5000)
+                except Exception:
+                    pass
+                self.page.wait_for_timeout(1500 * (attempt + 1))
                 classes = self.page.evaluate('''
                     (selector) => {
                         const select = document.querySelector(selector);
                         if (!select) return [];
-                        
                         const options = Array.from(select.options);
                         return options
-                            .map(opt => ({
-                                value: opt.value,
-                                text: opt.text.trim(),
-                                index: opt.index
-                            }))
-                            .filter(opt => 
-                                opt.text.length > 0 && 
-                                opt.value !== '' &&
-                                !opt.text.includes('Selecciona una clase') &&
-                                !opt.text.includes('Seleccionar') &&
-                                !opt.text.includes('Select')
-                            );
+                            .map((opt, i) => ({ value: String(opt.value || '').trim(), text: (opt.text || '').trim(), index: i }))
+                            .filter(opt => opt.value !== '' && opt.text.length > 0 &&
+                                !opt.text.includes('Selecciona una clase') && !opt.text.includes('Seleccionar') && !opt.text.includes('Select'));
                     }
                 ''', class_selector)
-                
-                if classes and len(classes) > 0:
-                    logger.info(f"✓ Found {len(classes)} classes for this date")
-                    # Log first few classes for debugging
-                    for i, c in enumerate(classes[:3]):
-                        logger.info(f"  - Class {i+1}: {c['text']}")
-                    if len(classes) > 3:
-                        logger.info(f"  ... and {len(classes) - 3} more")
-                    return classes
-                
-                logger.info(f"Attempt {attempt + 1}/{max_retries}: No classes found yet, waiting...")
-                self.page.wait_for_timeout(2000)
-            
-            logger.warning("No classes found after multiple retries")
-            
-            # Take screenshot for debugging
-            self.page.screenshot(
-                path=str(self.config.SCREENSHOTS_DIR / 'no_classes_found.png')
-            )
-            
-            # Get the HTML of the select to see what's there
-            select_html = self.page.evaluate('''
-                (selector) => {
-                    const select = document.querySelector(selector);
-                    return select ? select.innerHTML : 'SELECT NOT FOUND';
-                }
-            ''', class_selector)
-            logger.debug(f"Select HTML: {select_html[:500]}")
-            
-            return []
-            
+                if classes:
+                    # Deduplicate by value (class_id) - prefer first occurrence
+                    seen = set()
+                    unique = []
+                    for c in classes:
+                        if c['value'] and c['value'] not in seen:
+                            seen.add(c['value'])
+                            unique.append(c)
+                    logger.info(f"DOM fallback: found {len(unique)} classes (attempt {attempt + 1})")
+                    return unique
+            except Exception as e:
+                logger.warning(f"DOM fallback attempt {attempt + 1}/{max_retries} failed: {e}")
+                if attempt < max_retries - 1:
+                    self.page.wait_for_timeout(2000)
+        logger.error("DOM fallback exhausted all retries")
+        return []
+    
+    def get_available_classes_for_date(self) -> List[Dict]:
+        """
+        Get available classes for the currently selected date.
+        Uses get_classes_for_date_via_api with the date from the date picker.
+        """
+        try:
+            date_value = self.page.evaluate('document.querySelector("#class_date")?.value || ""')
+            if not date_value:
+                logger.warning("No date selected in date picker")
+                return []
+            return self.get_classes_for_date_via_api(date_value)
         except Exception as e:
-            logger.error(f"Error with class selector {class_selector}: {str(e)}")
-            self.page.screenshot(
-                path=str(self.config.SCREENSHOTS_DIR / 'class_selector_error.png')
-            )
+            logger.error(f"Error getting classes: {e}")
             return []
         
     def select_class_and_extract_reservations(self, class_info: Dict, date_str: str) -> Dict:
         """
-        Select a class and extract all reservation data using the API endpoint
-        class_info: dict with 'value', 'text', 'index' keys
+        Extract reservation data for a class using the API endpoint only (no DOM selection).
+        class_info: dict with 'value' (class_id), 'text' (class name), 'index' keys
         date_str: date in format "DD-MM-YYYY"
         """
         try:
-            logger.info(f"Selecting class: {class_info['text']}")
+            # Extract class ID from value - always use value (class_id), never labels
+            class_id = (class_info.get('value') or '').strip()
+            class_name = (class_info.get('text') or 'Unknown').strip()
             
-            # Extract class ID from the value (format: "104996-237092" or similar)
-            class_id = class_info.get('value', '')
-            
-            # Use the specific selector for the class dropdown
-            class_selector = '#clases'
-            
-            # Select the class from the dropdown
-            try:
-                self.page.wait_for_selector(class_selector, timeout=10000)
-                
-                # Try standard Playwright select_option first (most reliable)
-                try:
-                    logger.info(f"Attempting to select class value: {class_info['value']}")
-                    self.page.select_option(class_selector, value=class_info['value'])
-                    self.page.wait_for_timeout(1000)
-                    
-                    # Verify selection
-                    selected_value = self.page.evaluate(f'document.querySelector("{class_selector}").value')
-                    if selected_value == class_info['value']:
-                        logger.info(f"✓ Successfully selected class via select_option: {class_id}")
-                    else:
-                        logger.warning(f"select_option seemed to fail. Expected {class_info['value']}, got {selected_value}")
-                        raise Exception("Selection verification failed")
-                        
-                except Exception as e:
-                    logger.warning(f"Standard select_option failed: {e}, trying JavaScript fallback...")
-                    
-                    # Fallback to JavaScript selection
-                    class_selected = self.page.evaluate('''
-                        (classValue, selector) => {
-                            const select = document.querySelector(selector);
-                            if (!select) return null;
-                            
-                            // Try setting value directly
-                            select.value = classValue;
-                            
-                            // Dispatch events
-                            select.dispatchEvent(new Event('change', { bubbles: true }));
-                            select.dispatchEvent(new Event('input', { bubbles: true }));
-                            
-                            if (window.jQuery) {
-                                window.jQuery(select).val(classValue).trigger('change');
-                            }
-                            return select.value;
-                        }
-                    ''', class_info['value'], class_selector)
-                    
-                    if class_selected == class_info['value']:
-                        logger.info(f"✓ Selected class via JavaScript fallback")
-                    else:
-                        logger.error("✗ All selection methods failed")
-                        
-            except Exception as e:
-                logger.error(f"Error selecting class: {str(e)}")
-            
-            if not class_id:
-                logger.error(f"Could not determine class ID for: {class_info['text']}")
+            # Validate class_id: must be non-empty and match expected format (e.g. "105112-237420")
+            if not class_id or not re.search(r'^\d+-\d+$', class_id):
+                logger.error(f"Invalid class_id '{class_id}' for class '{class_name}' - skipping")
                 return {}
             
-            # Wait a bit for the page to process the selection
-            self.page.wait_for_timeout(2000)
+            logger.info(f"Fetching reservations for class: {class_name} (id: {class_id})")
             
             # Helper function to call API and check results
             def call_api(url):
@@ -1098,22 +1134,18 @@ class BoxMagicScraper:
             api_url = f"https://boxmagic.cl/checkin/get_alumnos_clase/{class_id}?fecha_where={date_str}&method=alumnos"
             data = call_api(api_url)
             
-            # 2. If empty or failed, try YYYY-MM-DD format
-            if not data or not data.get('success', False) or not data.get('alumnos', []):
+            # 2. Only retry with YYYY-MM-DD format when API actually failed (not for empty clases)
+            # Empty alumnos is valid (class with 0 reservations); only retry on success=false or no response
+            if not data or not data.get('success', False):
                 try:
-                    # Convert DD-MM-YYYY to YYYY-MM-DD
                     date_obj = datetime.strptime(date_str, "%d-%m-%Y")
                     date_iso = date_obj.strftime("%Y-%m-%d")
-                    
                     logger.info(f"Retrying with ISO date format: {date_iso}")
                     api_url_iso = f"https://boxmagic.cl/checkin/get_alumnos_clase/{class_id}?fecha_where={date_iso}&method=alumnos"
                     data_iso = call_api(api_url_iso)
-                    
-                    if data_iso and data_iso.get('success', False) and data_iso.get('alumnos', []):
-                        logger.info("✓ ISO date format returned data!")
+                    if data_iso and data_iso.get('success', False):
+                        logger.info("✓ ISO date format returned data")
                         data = data_iso
-                    else:
-                        logger.info("ISO date format also returned no data")
                 except Exception as e:
                     logger.warning(f"Date conversion failed: {e}")
 
@@ -1124,7 +1156,7 @@ class BoxMagicScraper:
             if not data.get('success', False):
                 logger.warning(f"API returned success=false for class {class_id}. Full response: {data}")
                 return {
-                    'class': class_info['text'],
+                    'class': class_name,
                     'classId': class_id,
                     'reservations': [],
                     'totalReservations': 0,
@@ -1132,8 +1164,8 @@ class BoxMagicScraper:
                     'apiResponse': data
                 }
             
-            alumnos = data.get('alumnos', [])
-            logger.info(f"✓ Retrieved {len(alumnos)} reservations from API for class: {class_info['text']}")
+            alumnos = data.get('alumnos') or []
+            logger.info(f"✓ Retrieved {len(alumnos)} reservations from API for class: {class_name}")
             
             # Format the reservations data
             formatted_reservations = []
@@ -1160,7 +1192,7 @@ class BoxMagicScraper:
                 })
             
             return {
-                'class': class_info['text'],
+                'class': class_name,
                 'classId': class_id,
                 'reservations': formatted_reservations,
                 'totalReservations': len(formatted_reservations),
@@ -1216,20 +1248,8 @@ class BoxMagicScraper:
                 self.page.screenshot(path=str(self.config.SCREENSHOTS_DIR / f'date_selector_error_{date_str}.png'))
                 raise # Re-raise the exception if the selector isn't found
             
-            date_selected = self.select_date_on_checkin(date_str)
-            
-            if not date_selected:
-                logger.error(f"Failed to select date: {date_str}")
-                self.page.screenshot(
-                    path=str(self.config.SCREENSHOTS_DIR / f'date_selection_failed_{date_str.replace("-", "_")}.png'),
-                    full_page=True
-                )
-                return {}
-            
-            logger.info(f"✓ Date selected successfully: {date_str}")
-            
-            # Get available classes for this date
-            classes = self.get_available_classes_for_date()
+            # Get classes via API (this also selects the date to trigger the classes API)
+            classes = self.get_classes_for_date_via_api(date_str)
             
             if not classes:
                 logger.warning(f"No classes found for date: {date_str}")
@@ -1254,7 +1274,9 @@ class BoxMagicScraper:
                 class_data = self.select_class_and_extract_reservations(class_info, date_str)
                 
                 if class_data:
-                    date_data['classes'][class_info['text']] = class_data
+                    # Use class_id as key for uniqueness (same name can exist for different classes)
+                    key = class_data.get('classId') or class_info.get('value') or class_info['text']
+                    date_data['classes'][key] = class_data
                     logger.info(f"✓ Completed: {class_data.get('totalReservations', 0)} reservations")
                     
                     # Call per-class callback if provided
@@ -1387,8 +1409,9 @@ class BoxMagicScraper:
                 # Define per-class callback to update main data structure
                 def on_class_scraped_handler(d_str, c_data):
                     if d_str in all_data['dates']:
-                        # Update class data
-                        all_data['dates'][d_str]['classes'][c_data['class']] = c_data
+                        # Update class data (use classId as key for uniqueness)
+                        key = c_data.get('classId') or c_data.get('class')
+                        all_data['dates'][d_str]['classes'][key] = c_data
                         
                         # Update totals
                         all_data['dates'][d_str]['totalClasses'] = len(all_data['dates'][d_str]['classes'])
