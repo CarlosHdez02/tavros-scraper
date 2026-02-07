@@ -45,6 +45,29 @@ SAMPLE_DOM_OPTIONS = [
     {"value": "105112-237418", "text": "Sesión semiprivada 10:15 am - 10:15-11:15 Presencial"},
 ]
 
+# Sample alumno from get_alumnos_clase API (includes fila = espacio/seat number)
+SAMPLE_ALUMNO_WITH_FILA = {
+    "name": "Maria Andrea",
+    "fila": "8",
+    "last_name": "Sanchez Viveros",
+    "nombre_usuario": None,
+    "nombre_plan": "Paquete Trimestral",
+    "email": "irlanda9119@gmail.com",
+    "telefono": "33 1601 8925",
+    "imagen": "https://s3.us-east-1.amazonaws.com/cdn.boxmagic.cl/cuentas/6XD9qNbXD2/avatar.jpg?1768970830",
+    "id": 884509,
+    "status": "activo",
+    "reserva_id": 29269327,
+    "hash_reserva_id": "d0jjlKrE0r",
+    "canal": "members",
+    "fecha_creacion": "06/02 04:40:08",
+    "rating": None,
+    "form_asistencia_url": False,
+    "mostrar_formulario": True,
+    "asistencia_confirmada": 0,
+    "pago_pendiente": False,
+}
+
 
 @pytest.fixture
 def scraper():
@@ -282,6 +305,51 @@ class TestGetAlumnosClaseResponseEdgeCases:
         assert not data.get("success", False)
 
 
+class TestReservationFilaField:
+    """Verify fila (espacio/seat) field is extracted from API and saved."""
+
+    def test_reservation_includes_fila_from_api(self):
+        """Alumno with fila from API is included in formatted output."""
+        alumno = SAMPLE_ALUMNO_WITH_FILA
+        formatted = {
+            "id": alumno.get("id"),
+            "reserva_id": alumno.get("reserva_id"),
+            "hash_reserva_id": alumno.get("hash_reserva_id"),
+            "name": (alumno.get("name") or "").strip(),
+            "last_name": (alumno.get("last_name") or "").strip(),
+            "full_name": f"{alumno.get('name', '').strip()} {alumno.get('last_name', '').strip()}".strip(),
+            "email": alumno.get("email"),
+            "telefono": alumno.get("telefono"),
+            "status": alumno.get("status"),
+            "nombre_plan": alumno.get("nombre_plan"),
+            "canal": alumno.get("canal"),
+            "fecha_creacion": alumno.get("fecha_creacion"),
+            "asistencia_confirmada": alumno.get("asistencia_confirmada", 0),
+            "pago_pendiente": alumno.get("pago_pendiente", False),
+            "form_asistencia_url": alumno.get("form_asistencia_url"),
+            "mostrar_formulario": alumno.get("mostrar_formulario"),
+            "rating": alumno.get("rating"),
+            "imagen": alumno.get("imagen"),
+            "fila": alumno.get("fila"),
+        }
+        assert formatted["fila"] == "8"
+        assert formatted["name"] == "Maria Andrea"
+        assert formatted["full_name"] == "Maria Andrea Sanchez Viveros"
+
+    def test_fila_corresponds_to_info_reserva_espacio(self):
+        """fila matches 'espacio N' in DOM span #info_reserva (Reservado members el 06/02 04:40:08 espacio 8)."""
+        alumno = SAMPLE_ALUMNO_WITH_FILA
+        fila = alumno.get("fila")
+        assert fila == "8"
+        # DOM shows: <b>espacio</b> 8 - fila in API is "8"
+
+    def test_reservation_without_fila_has_none(self):
+        """Alumno without fila should have fila=None in output."""
+        alumno = {"name": "Test", "last_name": "User", "id": 1}
+        fila = alumno.get("fila")
+        assert fila is None
+
+
 class TestOutputStructureValidation:
     """Validate output structure for API consumers."""
 
@@ -297,6 +365,18 @@ class TestOutputStructureValidation:
         }
         for k in required:
             assert k in class_data
+
+    def test_reservation_includes_fila_key(self):
+        """Each reservation in output must include fila (espacio) key."""
+        reservation = {
+            "id": 884509,
+            "name": "Maria Andrea",
+            "last_name": "Sanchez Viveros",
+            "full_name": "Maria Andrea Sanchez Viveros",
+            "fila": "8",
+        }
+        assert "fila" in reservation
+        assert reservation["fila"] == "8"
 
     def test_date_data_required_keys(self):
         """Each date in output must have required keys."""
