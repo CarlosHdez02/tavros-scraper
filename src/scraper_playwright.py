@@ -50,6 +50,8 @@ class BoxMagicScraper:
                 'input[id*="username"]',
                 'input[placeholder*="email" i]',
                 'input[placeholder*="usuario" i]',
+                'input[id*=info_reserva]',
+                
             ]
             
             username_filled = False
@@ -1229,7 +1231,8 @@ class BoxMagicScraper:
                     'form_asistencia_url': alumno.get('form_asistencia_url'),
                     'mostrar_formulario': alumno.get('mostrar_formulario'),
                     'rating': alumno.get('rating'),
-                    'imagen': alumno.get('imagen')
+                    'imagen': alumno.get('imagen'),
+                    'fila': alumno.get('fila'),
                 })
             
             return {
