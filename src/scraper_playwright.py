@@ -967,124 +967,139 @@ class BoxMagicScraper:
                     classes.append({'value': val, 'text': txt, 'index': len(classes)})
         return classes
     
-    def get_classes_for_date_via_api(self, date_str: str) -> List[Dict]:
+    def get_classes_for_date_api_only(self, date_str: str) -> List[Dict]:
         """
-        Get list of classes for a date by intercepting the API response when the date is selected.
-        Falls back to trying known API endpoint patterns. Avoids DOM-based class lookup.
-        Returns list of dicts: [{'value': class_id, 'text': class_name, 'index': i}, ...]
+        Get classes for a date by calling the API directly - NO DOM interaction.
+        Uses page.request.get with browser session. Works even if #class_date is not visible.
+        Returns list of dicts: [{'value': clase_id-dias_clases_id, 'text': class_name, 'index': i}, ...]
         """
-        logger.info(f"Getting classes for date {date_str} via API...")
-        
-        captured_classes = []
-        
-        def handle_response(response):
-            try:
-                url = response.url
-                if 'get_alumnos_clase' in url:
-                    return
-                if 'boxmagic.cl/checkin' not in url:
-                    return
-                if response.status != 200:
-                    return
-                body = None
-                try:
-                    body = response.json()
-                except Exception:
-                    try:
-                        body = response.text()
-                    except Exception:
-                        return
-                parsed = self._parse_classes_from_api_response(body)
-                if parsed:
-                    captured_classes.extend(parsed)
-                    logger.info(f"Captured {len(parsed)} classes from API response: {url[:80]}...")
-            except Exception as e:
-                logger.debug(f"Error parsing response: {e}")
-        
-        # Listen for API responses when date is selected (captures classes endpoint)
-        self.page.on('response', handle_response)
-        try:
-            self.select_date_on_checkin(date_str)
-            # Wait for async requests to complete
-            self.page.wait_for_timeout(4000)
-        finally:
-            self.page.remove_listener('response', handle_response)
-        
-        if captured_classes:
-            seen = set()
-            unique = []
-            for c in captured_classes:
-                if c['value'] not in seen and c['value']:
-                    seen.add(c['value'])
-                    unique.append(c)
-            logger.info(f"✓ Found {len(unique)} classes via API interception")
-            return unique
-        
-        # Fallback: try direct API calls (BoxMagic date_get_clases is the known endpoint)
         base_url = "https://boxmagic.cl"
         endpoints_to_try = [
             f"/checkin/date_get_clases/{date_str}",
             f"/checkin/get_clases?fecha_where={date_str}",
             f"/checkin/clases_select?fecha_where={date_str}",
-            f"/checkin/get_opciones_clases?fecha_where={date_str}",
         ]
-        
+        headers = {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json, text/javascript, */*; q=0.01'}
         for path in endpoints_to_try:
             try:
                 url = base_url + path
-                logger.info(f"Trying fallback API: {url}")
-                response = self.page.request.get(url, headers={
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json, text/javascript, */*; q=0.01'
-                })
+                logger.info(f"Fetching classes via API: {url}")
+                response = self.page.request.get(url, headers=headers, timeout=15000)
                 if response.status != 200:
+                    logger.debug(f"API returned {response.status} for {path}")
                     continue
                 body = response.json()
                 parsed = self._parse_classes_from_api_response(body)
                 if parsed:
-                    logger.info(f"✓ Found {len(parsed)} classes via fallback API: {path}")
+                    logger.info(f"✓ Found {len(parsed)} classes via API (no DOM)")
                     return parsed
             except Exception as e:
-                logger.debug(f"Fallback {path} failed: {e}")
+                logger.debug(f"API {path} failed: {e}")
+        return []
+    
+    def get_classes_for_date_via_api(self, date_str: str) -> List[Dict]:
+        """
+        Get list of classes for a date. Tries API first (no DOM), then DOM fallback.
+        Returns list of dicts: [{'value': clase_id-dias_clases_id, 'text': class_name, 'index': i}, ...]
+        """
+        logger.info(f"Getting classes for date {date_str}...")
         
-        # Last resort: read from DOM (kept for backward compatibility if API shape differs)
-        logger.warning("API methods did not return classes, falling back to DOM read")
+        # 1. API-first: no DOM needed, works when #class_date times out
+        classes = self.get_classes_for_date_api_only(date_str)
+        if classes:
+            return classes
+        
+        # 2. DOM fallback: intercept response when date is selected
+        captured_classes = []
+        def handle_response(response):
+            try:
+                url = response.url
+                if 'get_alumnos_clase' in url or response.status != 200:
+                    return
+                if 'boxmagic.cl/checkin' not in url:
+                    return
+                try:
+                    body = response.json()
+                except Exception:
+                    body = response.text() if hasattr(response, 'text') else None
+                if body:
+                    parsed = self._parse_classes_from_api_response(body)
+                    if parsed:
+                        captured_classes.extend(parsed)
+            except Exception:
+                pass
+        
+        try:
+            self.page.on('response', handle_response)
+            self.select_date_on_checkin(date_str)
+            self.page.wait_for_timeout(4000)
+        except Exception as e:
+            logger.debug(f"DOM date selection failed: {e}")
+        finally:
+            try:
+                self.page.remove_listener('response', handle_response)
+            except Exception:
+                pass
+        
+        if captured_classes:
+            seen = set()
+            unique = []
+            for c in captured_classes:
+                if c.get('value') and c['value'] not in seen:
+                    seen.add(c['value'])
+                    unique.append(c)
+            logger.info(f"✓ Found {len(unique)} classes via interception")
+            return unique
+        
+        # 3. DOM fallback: read #clases options with flexible value extraction
+        logger.warning("API returned empty, falling back to DOM")
         return self._get_classes_from_dom_fallback()
     
     def _get_classes_from_dom_fallback(self) -> List[Dict]:
         """
-        Fallback: read class options from #clases dropdown by value (not labels).
-        Used when API interception and fallback APIs fail. Uses opt.value as class_id.
+        Fallback: read class options from #clases dropdown. Extracts value (clase_id-dias_clases_id)
+        using flexible regex - handles value format variations (06:00 a 07:00, 06:00-07:00, etc.).
         """
         class_selector = '#clases'
+        # Flexible regex: match clase_id-dias_clases_id (digits-digits) in value
+        value_pattern = re.compile(r'(\d+-\d+)')
         max_retries = 3
         for attempt in range(max_retries):
             try:
                 self.page.wait_for_selector(class_selector, timeout=10000)
-                # Wait for loading indicator to disappear if present
                 try:
-                    loading = '#select_clases_loading, .bm-loader, [class*="loading"]'
-                    self.page.wait_for_selector(loading, state='hidden', timeout=5000)
+                    self.page.wait_for_selector('#select_clases_loading, .bm-loader', state='hidden', timeout=5000)
                 except Exception:
                     pass
                 self.page.wait_for_timeout(1500 * (attempt + 1))
-                classes = self.page.evaluate('''
+                raw_options = self.page.evaluate('''
                     (selector) => {
                         const select = document.querySelector(selector);
                         if (!select) return [];
-                        const options = Array.from(select.options);
-                        return options
-                            .map((opt, i) => ({ value: String(opt.value || '').trim(), text: (opt.text || '').trim(), index: i }))
-                            .filter(opt => opt.value !== '' && opt.text.length > 0 &&
-                                !opt.text.includes('Selecciona una clase') && !opt.text.includes('Seleccionar') && !opt.text.includes('Select'));
+                        return Array.from(select.options).map((opt, i) => ({
+                            value: String(opt.value || '').trim(),
+                            text: (opt.text || '').trim(),
+                            index: i
+                        }));
                     }
                 ''', class_selector)
+                classes = []
+                skip_texts = ('Selecciona una clase', 'Seleccionar', 'Select')
+                for opt in raw_options or []:
+                    val, txt = opt.get('value', ''), opt.get('text', '')
+                    if not txt or any(s in txt for s in skip_texts):
+                        continue
+                    # Extract clase_id-dias_clases_id from value (flexible: value may have extra chars)
+                    m = value_pattern.search(val) if val else None
+                    if m:
+                        classes.append({'value': m.group(1), 'text': txt, 'index': opt.get('index', len(classes))})
+                    elif val and value_pattern.match(val):
+                        classes.append({'value': val, 'text': txt, 'index': opt.get('index', len(classes))})
                 if classes:
-                    # Deduplicate by value (class_id) - prefer first occurrence
                     seen = set()
                     unique = []
                     for c in classes:
-                        if c['value'] and c['value'] not in seen:
+                        if c['value'] not in seen:
                             seen.add(c['value'])
                             unique.append(c)
                     logger.info(f"DOM fallback: found {len(unique)} classes (attempt {attempt + 1})")
@@ -1254,28 +1269,20 @@ class BoxMagicScraper:
                 self.page.wait_for_timeout(2000)
             
             # Wait for date input
-            logger.info(f"Attempting to select date: {date_str}")
+            logger.info(f"Fetching classes for date: {date_str}")
             
-            # If we are not on the check-in page, try to navigate there
-            if 'checkin' not in self.page.url.lower() and navigate:
-                logger.info("Not on check-in page, navigating...")
-                self.page.goto(self.config.CHECKIN_URL, wait_until='networkidle')
-            
-            logger.info(f"Selecting date: {date_str}")
-            
-            # Try to find the date picker with increased timeout
-            try:
-                # Wait for the input to be visible - increased timeout for Render
-                self.page.wait_for_selector('#class_date', state='visible', timeout=30000)
-                logger.info("Found date input with selector: #class_date")
-            except Exception as e:
-                logger.error(f"Error with date selector #class_date: {e}")
-                # Take screenshot for debugging
-                self.page.screenshot(path=str(self.config.SCREENSHOTS_DIR / f'date_selector_error_{date_str}.png'))
-                raise # Re-raise the exception if the selector isn't found
-            
-            # Get classes via API (this also selects the date to trigger the classes API)
+            # API-first: no DOM required. Works when #class_date times out (e.g. slow Render, login redirect)
             classes = self.get_classes_for_date_via_api(date_str)
+            
+            # DOM fallback: only if API returned empty
+            if not classes:
+                if 'checkin' not in self.page.url.lower() and navigate:
+                    self.page.goto(self.config.CHECKIN_URL, wait_until='networkidle')
+                try:
+                    self.page.wait_for_selector('#class_date', state='visible', timeout=10000)
+                    classes = self.get_classes_for_date_via_api(date_str)
+                except Exception as e:
+                    logger.warning(f"DOM fallback skipped: {e}")
             
             if not classes:
                 logger.warning(f"No classes found for date: {date_str}")
