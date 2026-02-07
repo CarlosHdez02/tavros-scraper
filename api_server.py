@@ -280,9 +280,9 @@ def get_checkin_by_date(date):
     })
 
 
-@app.route('/api/checkin/class/<date>/<class_name>')
-def get_checkin_by_class(date, class_name):
-    """Get reservations for specific class on specific date"""
+@app.route('/api/checkin/class/<date>/<class_key>')
+def get_checkin_by_class(date, class_key):
+    """Get reservations for specific class on specific date. class_key can be class_id (e.g. 105112-237420) or class name."""
     if not LATEST_CHECKIN_DATA:
         return jsonify({'error': 'No data available'}), 404
     
@@ -293,16 +293,26 @@ def get_checkin_by_class(date, class_name):
     
     classes = dates[date].get('classes', {})
     
-    if class_name not in classes:
+    # Direct lookup by class_id (storage key)
+    if class_key in classes:
+        class_data = classes[class_key]
+    else:
+        # Fallback: lookup by class name
+        class_data = next((c for c in classes.values() if c.get('class') == class_key), None)
+    
+    if not class_data:
+        available = list(classes.keys())
         return jsonify({
             'error': 'Class not found',
-            'available_classes': list(classes.keys())
+            'available_classes': available,
+            'hint': 'Use class_id (e.g. 105112-237420) or exact class name'
         }), 404
     
     return jsonify({
         'date': date,
-        'class': class_name,
-        'data': classes[class_name]
+        'class': class_data.get('class'),
+        'classId': class_data.get('classId'),
+        'data': class_data
     })
 
 
