@@ -915,25 +915,45 @@ class BoxMagicScraper:
             return False
         
     def _parse_classes_from_api_response(self, data) -> List[Dict]:
-        """Parse API response into list of {value, text, index} dicts."""
+        """
+        Parse API response into list of {value, text, index} dicts.
+        BoxMagic date_get_clases returns clase_id and dias_clases_id separately.
+        The get_alumnos_clase endpoint requires value = clase_id-dias_clases_id (e.g. 104996-237092).
+        """
         classes = []
+        
+        def parse_item(item, i):
+            if not isinstance(item, dict):
+                return None
+            # BoxMagic API: use clase_id-dias_clases_id (matches DOM option value format)
+            cid = item.get('clase_id')
+            did = item.get('dias_clases_id')
+            if cid is not None and did is not None:
+                val = f"{cid}-{did}"
+            else:
+                val = item.get('id') or item.get('value') or (str(item.get('clase_id', '')) if item.get('clase_id') else '')
+            if not val:
+                return None
+            txt = item.get('nombre') or item.get('text') or item.get('name') or item.get('nombre_clase') or item.get('label') or ''
+            if not txt and ('hora_inicio' in item or 'hora_fin' in item):
+                txt = f"{item.get('nombre', 'Clase')} {item.get('hora_inicio', '')}-{item.get('hora_fin', '')}"
+            if not txt:
+                txt = str(val)
+            return {'value': str(val), 'text': str(txt).strip(), 'index': i}
+        
         if isinstance(data, list):
             for i, item in enumerate(data):
-                if isinstance(item, dict):
-                    val = item.get('id') or item.get('value') or item.get('clase_id') or ''
-                    txt = item.get('text') or item.get('name') or item.get('nombre_clase') or item.get('label') or str(item)
-                    if val:
-                        classes.append({'value': str(val), 'text': str(txt).strip(), 'index': i})
+                parsed = parse_item(item, i)
+                if parsed:
+                    classes.append(parsed)
                 elif isinstance(item, (str, int, float)):
                     classes.append({'value': str(item), 'text': str(item), 'index': i})
         elif isinstance(data, dict):
             items = data.get('clases') or data.get('options') or data.get('data') or data.get('opciones') or []
             for i, item in enumerate(items):
-                if isinstance(item, dict):
-                    val = item.get('id') or item.get('value') or item.get('clase_id') or ''
-                    txt = item.get('text') or item.get('name') or item.get('nombre_clase') or item.get('label') or str(item)
-                    if val:
-                        classes.append({'value': str(val), 'text': str(txt).strip(), 'index': i})
+                parsed = parse_item(item, i)
+                if parsed:
+                    classes.append(parsed)
             # Also check for key-value format: {"105112-237420": "Class Name"}
             if not classes and data:
                 for k, v in data.items():
@@ -1000,9 +1020,10 @@ class BoxMagicScraper:
             logger.info(f"✓ Found {len(unique)} classes via API interception")
             return unique
         
-        # Fallback: try direct API calls to common endpoint patterns
+        # Fallback: try direct API calls (BoxMagic date_get_clases is the known endpoint)
         base_url = "https://boxmagic.cl"
         endpoints_to_try = [
+            f"/checkin/date_get_clases/{date_str}",
             f"/checkin/get_clases?fecha_where={date_str}",
             f"/checkin/clases_select?fecha_where={date_str}",
             f"/checkin/get_opciones_clases?fecha_where={date_str}",
@@ -1097,11 +1118,16 @@ class BoxMagicScraper:
         date_str: date in format "DD-MM-YYYY"
         """
         try:
-            # Extract class ID from value - always use value (class_id), never labels
+            # Extract class ID - get_alumnos_clase needs clase_id-dias_clases_id (e.g. "104996-237092")
             class_id = (class_info.get('value') or '').strip()
-            class_name = (class_info.get('text') or 'Unknown').strip()
+            if not class_id and isinstance(class_info, dict):
+                # Fallback: build from BoxMagic API format (clase_id + dias_clases_id)
+                cid, did = class_info.get('clase_id'), class_info.get('dias_clases_id')
+                if cid is not None and did is not None:
+                    class_id = f"{cid}-{did}"
+            class_name = (class_info.get('text') or class_info.get('nombre') or 'Unknown').strip() if isinstance(class_info, dict) else 'Unknown'
             
-            # Validate class_id: must be non-empty and match expected format (e.g. "105112-237420")
+            # Validate class_id: must match format clase_id-dias_clases_id (e.g. "104996-237092")
             if not class_id or not re.search(r'^\d+-\d+$', class_id):
                 logger.error(f"Invalid class_id '{class_id}' for class '{class_name}' - skipping")
                 return {}
