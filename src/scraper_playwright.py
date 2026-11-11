@@ -15,6 +15,10 @@ import subprocess
 from zoneinfo import ZoneInfo
 logger = logging.getLogger(__name__)
 
+
+class SessionExpiredError(Exception):
+    """BoxMagic answered with the login page instead of data and re-login failed."""
+
 class BoxMagicScraper:
     """
     Scraper for BoxMagic calendar using Playwright
@@ -24,9 +28,77 @@ class BoxMagicScraper:
         self.config = config
         self.playwright = None
         self.browser = None
+        self.context = None
         self.page = None
         self.is_logged_in = False
-    
+
+    # ------------------------------------------------------------------
+    # Navigation / session helpers
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _is_login_url(url: str) -> bool:
+        """True if url is a BoxMagic login/auth page (old boxmagic.cl/login or new auth.boxmagic.cl)."""
+        u = (url or '').lower()
+        return 'auth.boxmagic.cl' in u or '/login' in u
+
+    def _goto(self, url: str, timeout: int = 60000):
+        """
+        Navigate without depending on 'networkidle' (auth.boxmagic.cl never goes idle).
+        Waits for DOMContentLoaded, then gives networkidle a short best-effort chance.
+        """
+        response = self.page.goto(url, wait_until='domcontentloaded', timeout=timeout)
+        try:
+            self.page.wait_for_load_state('networkidle', timeout=10000)
+        except Exception:
+            pass
+        return response
+
+    def _relogin(self) -> bool:
+        """Log in again after the session expired, then return to the check-in page."""
+        logger.warning("BoxMagic session expired - logging in again...")
+        self.is_logged_in = False
+        if not self.login():
+            return False
+        try:
+            self._goto(self.config.CHECKIN_URL)
+        except Exception as e:
+            logger.warning(f"Could not return to check-in page after re-login: {e}")
+        return True
+
+    def _api_get_json(self, url: str, timeout: int = 20000, allow_relogin: bool = True):
+        """
+        GET a BoxMagic JSON endpoint with the browser session.
+
+        Returns (status, parsed_json). When the session has expired BoxMagic answers
+        with the HTML login page and HTTP 200 instead of JSON - that used to be read as
+        "no classes" and the screen kept showing stale data. Now we re-login once and
+        retry; if it still isn't JSON we raise SessionExpiredError so the failure is loud.
+        """
+        headers = {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+        }
+        response = self.page.request.get(url, headers=headers, timeout=timeout)
+        content_type = (response.headers.get('content-type') or '').lower()
+        body_text = response.text()
+        head = body_text[:5000].lower()
+        looks_like_login = self._is_login_url(response.url) or (
+            response.status == 200
+            and 'text/html' in content_type
+            and ('auth.boxmagic.cl' in head or 'type="password"' in head or 'login' in head[:300])
+        )
+        if looks_like_login:
+            if allow_relogin and self._relogin():
+                return self._api_get_json(url, timeout=timeout, allow_relogin=False)
+            raise SessionExpiredError(f"BoxMagic returned the login page for {url}")
+        if response.status != 200:
+            return response.status, None
+        try:
+            return response.status, json.loads(body_text)
+        except ValueError:
+            logger.warning(f"Non-JSON response from {url}: {body_text[:200]!r}")
+            return response.status, None
+
     def login(self) -> bool:
         """
         Automatically login using credentials from config
@@ -37,8 +109,14 @@ class BoxMagicScraper:
             
             # Navigate to login page
             logger.info(f"Navigating to login page: {self.config.LOGIN_URL}")
-            self.page.goto(self.config.LOGIN_URL, wait_until='networkidle')
-            self.page.wait_for_timeout(2000)
+            # BoxMagic login now lives on auth.boxmagic.cl, which keeps background requests
+            # open and never reaches 'networkidle' -> wait for the DOM + the email field instead.
+            self._goto(self.config.LOGIN_URL)
+            try:
+                self.page.wait_for_selector('input[type="email"], input[name="email"]', timeout=30000)
+            except Exception:
+                logger.warning("Email field did not appear within 30s, trying selectors anyway")
+            self.page.wait_for_timeout(1000)
             
             # Try multiple selectors for username/email field
             username_selectors = [
@@ -130,7 +208,20 @@ class BoxMagicScraper:
             
             # Wait for navigation after login
             self.page.wait_for_timeout(3000)
-            
+
+            # auth.boxmagic.cl now shows an account chooser whose "Admin panel" button is
+            # <button aria-label="Admin panel"> overlaying the label. It can take a few seconds
+            # to render, so wait for it explicitly instead of a single fixed-delay check.
+            if self._is_login_url(self.page.url):
+                try:
+                    admin_btn = self.page.locator('button[aria-label="Admin panel"]')
+                    admin_btn.first.wait_for(state='visible', timeout=30000)
+                    admin_btn.first.click()
+                    logger.info('✓ Clicked button[aria-label="Admin panel"]')
+                    self.page.wait_for_url(lambda u: not self._is_login_url(u), timeout=60000)
+                except Exception as e:
+                    logger.warning(f"Admin panel button flow did not complete ({e}); trying legacy selectors")
+
             # Check if login was successful
             current_url = self.page.url
             logger.info(f"Current URL after login attempt: {current_url}")
@@ -144,7 +235,7 @@ class BoxMagicScraper:
             is_intermediate_page = False
             try:
                 # Check for Ui2Boton divs (these are the button containers)
-                if self.page.locator('.Ui2Boton').count() > 0:
+                if self._is_login_url(current_url) and self.page.locator('.Ui2Boton').count() > 0:
                     is_intermediate_page = True
                     logger.info("Detected intermediate user selection page (Ui2Boton found)")
             except:
@@ -241,12 +332,25 @@ class BoxMagicScraper:
                 if admin_clicked:
                     # Wait for navigation after clicking Admin panel
                     self.page.wait_for_timeout(3000)
-                    self.page.wait_for_load_state('networkidle', timeout=60000)
+                    try:
+                        self.page.wait_for_url(lambda u: not self._is_login_url(u), timeout=60000)
+                    except Exception:
+                        pass
                     current_url = self.page.url
                     logger.info(f"Current URL after clicking Admin panel: {current_url}")
             
-            # Check if login was successful (we're no longer on login page)
-            if 'login' not in current_url.lower() or current_url != self.config.LOGIN_URL:
+            # Give the redirect a moment if we haven't left the auth page yet
+            if self._is_login_url(current_url):
+                try:
+                    self.page.wait_for_url(lambda u: not self._is_login_url(u), timeout=15000)
+                except Exception:
+                    pass
+                current_url = self.page.url
+
+            # Check if login was successful: we must have actually left the login/auth pages.
+            # (The old check `current_url != LOGIN_URL` was always true after the redirect to
+            # auth.boxmagic.cl, so failed logins were reported as successful.)
+            if not self._is_login_url(current_url):
                 logger.info("✓ Login successful and navigated to application!")
                 
                 # Save session for future use
@@ -328,11 +432,11 @@ class BoxMagicScraper:
         if session_valid and storage_state:
             try:
                 # Navigate to a protected page to verify session
-                self.page.goto(self.config.CHECKIN_URL, wait_until='networkidle', timeout=10000)
+                self._goto(self.config.CHECKIN_URL, timeout=30000)
                 self.page.wait_for_timeout(2000)
                 
                 # Check if we're redirected to login (session invalid)
-                if 'login' in self.page.url.lower():
+                if self._is_login_url(self.page.url):
                     logger.warning("Saved session appears to be invalid, will attempt login")
                     session_valid = False
                 else:
@@ -936,12 +1040,25 @@ class BoxMagicScraper:
                 val = item.get('id') or item.get('value') or (str(item.get('clase_id', '')) if item.get('clase_id') else '')
             if not val:
                 return None
-            txt = item.get('nombre') or item.get('text') or item.get('name') or item.get('nombre_clase') or item.get('label') or ''
-            if not txt and ('hora_inicio' in item or 'hora_fin' in item):
-                txt = f"{item.get('nombre', 'Clase')} {item.get('hora_inicio', '')}-{item.get('hora_fin', '')}"
-            if not txt:
-                txt = str(val)
-            return {'value': str(val), 'text': str(txt).strip(), 'index': i}
+            nombre = (item.get('nombre') or item.get('text') or item.get('name') or item.get('nombre_clase') or item.get('label') or '').strip()
+            hora_inicio = (item.get('hora_inicio') or '').strip()
+            hora_fin = (item.get('hora_fin') or '').strip()
+            if hora_inicio and hora_fin:
+                # Same label BoxMagic shows in the check-in dropdown (and what the scraper
+                # produced before the API refactor), e.g.
+                # "Sesión grupal 8:00 am - 08:00 a 09:00 - Presencial"
+                modalidad = 'Online' if str(item.get('clase_online', 0)) in ('1', 'True', 'true') else 'Presencial'
+                txt = f"{nombre or 'Clase'} - {hora_inicio} a {hora_fin} - {modalidad}"
+            else:
+                txt = nombre or str(val)
+            parsed = {'value': str(val), 'text': txt, 'index': i}
+            if nombre:
+                parsed['nombre'] = nombre
+            if hora_inicio:
+                parsed['hora_inicio'] = hora_inicio
+            if hora_fin:
+                parsed['hora_fin'] = hora_fin
+            return parsed
         
         if isinstance(data, list):
             for i, item in enumerate(data):
@@ -981,22 +1098,23 @@ class BoxMagicScraper:
             f"/checkin/get_clases?fecha_where={date_str}",
             f"/checkin/clases_select?fecha_where={date_str}",
         ]
-        headers = {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json, text/javascript, */*; q=0.01'}
         for path in endpoints_to_try:
+            url = base_url + path
+            logger.info(f"Fetching classes via API: {url}")
             try:
-                url = base_url + path
-                logger.info(f"Fetching classes via API: {url}")
-                response = self.page.request.get(url, headers=headers, timeout=15000)
-                if response.status != 200:
-                    logger.debug(f"API returned {response.status} for {path}")
-                    continue
-                body = response.json()
-                parsed = self._parse_classes_from_api_response(body)
-                if parsed:
-                    logger.info(f"✓ Found {len(parsed)} classes via API (no DOM)")
-                    return parsed
+                status, body = self._api_get_json(url, timeout=15000)
+            except SessionExpiredError:
+                raise  # never treat "logged out" as "no classes"
             except Exception as e:
                 logger.debug(f"API {path} failed: {e}")
+                continue
+            if status != 200 or body is None:
+                logger.debug(f"API returned {status} for {path}")
+                continue
+            parsed = self._parse_classes_from_api_response(body)
+            if parsed:
+                logger.info(f"✓ Found {len(parsed)} classes via API (no DOM)")
+                return parsed
         return []
     
     def get_classes_for_date_via_api(self, date_str: str) -> List[Dict]:
@@ -1155,20 +1273,11 @@ class BoxMagicScraper:
             def call_api(url):
                 logger.info(f"Fetching data from API: {url}")
                 try:
-                    # Use page context to make the API call (to include cookies/auth)
-                    # Adding headers just in case, though page.request should handle cookies
-                    response = self.page.request.get(url, headers={
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json, text/javascript, */*; q=0.01'
-                    })
-                    
-                    logger.info(f"API Response Status: {response.status}")
-                    if response.status != 200:
-                        return None
-                    
-                    response_text = response.text()
-                    logger.debug(f"API Response Body: {response_text[:500]}...")
-                    return response.json()
+                    status, body = self._api_get_json(url)
+                    logger.info(f"API Response Status: {status}")
+                    return body if isinstance(body, dict) else None
+                except SessionExpiredError:
+                    raise
                 except Exception as e:
                     logger.error(f"API request failed: {e}")
                     return None
@@ -1238,6 +1347,9 @@ class BoxMagicScraper:
             return {
                 'class': class_name,
                 'classId': class_id,
+                'nombre': class_info.get('nombre'),
+                'hora_inicio': class_info.get('hora_inicio'),
+                'hora_fin': class_info.get('hora_fin'),
                 'reservations': formatted_reservations,
                 'totalReservations': len(formatted_reservations),
                 'limite': data.get('limite', 0),
@@ -1246,6 +1358,8 @@ class BoxMagicScraper:
                 'extractedAt': datetime.now().isoformat()
             }
             
+        except SessionExpiredError:
+            raise
         except Exception as e:
             logger.error(f"Error extracting reservations for class {class_info.get('text', 'unknown')}: {str(e)}", exc_info=True)
             return {}
@@ -1265,7 +1379,7 @@ class BoxMagicScraper:
             # Navigate to check-in page only if requested
             if navigate:
                 logger.info(f"Navigating to check-in page: {self.config.CHECKIN_URL}")
-                self.page.goto(self.config.CHECKIN_URL, wait_until='networkidle')
+                self._goto(self.config.CHECKIN_URL)
                 
                 # Wait for page to load
                 self.page.wait_for_selector('.pace-done', timeout=self.config.TIMEOUT)
@@ -1280,7 +1394,7 @@ class BoxMagicScraper:
             # DOM fallback: only if API returned empty
             if not classes:
                 if 'checkin' not in self.page.url.lower() and navigate:
-                    self.page.goto(self.config.CHECKIN_URL, wait_until='networkidle')
+                    self._goto(self.config.CHECKIN_URL)
                 try:
                     self.page.wait_for_selector('#class_date', state='visible', timeout=10000)
                     classes = self.get_classes_for_date_via_api(date_str)
@@ -1327,9 +1441,14 @@ class BoxMagicScraper:
                 # Small delay between classes
                 self.page.wait_for_timeout(1000)
             
+            failed = [c['value'] for c in classes if c.get('value') not in date_data['classes']]
+            if failed:
+                date_data['failedClasses'] = failed
             logger.info(f"\n✓ Completed scraping for date {date_str}: {len(date_data['classes'])} classes")
             return date_data
             
+        except SessionExpiredError:
+            raise
         except Exception as e:
             logger.error(f"Error scraping check-in for date {date_str}: {str(e)}")
             self.page.screenshot(
@@ -1362,49 +1481,37 @@ class BoxMagicScraper:
             # Navigate to check-in page once at the beginning
             logger.info(f"Navigating to check-in page: {self.config.CHECKIN_URL}")
             try:
-                self.page.goto(self.config.CHECKIN_URL, wait_until='networkidle', timeout=60000)
-                logger.info(f"✓ Successfully navigated to {self.config.CHECKIN_URL}")
+                self._goto(self.config.CHECKIN_URL)
+                logger.info(f"✓ Navigated, current URL: {self.page.url}")
             except Exception as e:
                 logger.error(f"Failed to navigate to check-in page: {str(e)}")
                 self.page.screenshot(path=str(self.config.SCREENSHOTS_DIR / 'navigation_error.png'))
                 raise
-            
-            # Verify we're on the correct page
-            current_url = self.page.url
-            logger.info(f"Current URL: {current_url}")
-            
-            # Check if we were redirected to login
-            if 'login' in current_url.lower():
-                logger.warning("Redirected to login page. Session might be invalid. Attempting re-login...")
-                if self.login():
-                    logger.info("✓ Re-login successful. Navigating back to check-in...")
-                    self.page.goto(self.config.CHECKIN_URL, wait_until='networkidle', timeout=60000)
-                else:
-                    raise Exception("Failed to login after redirect")
+
+            # Redirected to login (auth.boxmagic.cl) -> session invalid. Fail loudly if re-login fails.
+            if self._is_login_url(self.page.url):
+                logger.warning("Redirected to login page. Session invalid. Attempting re-login...")
+                if not self._relogin() or self._is_login_url(self.page.url):
+                    raise SessionExpiredError("Failed to login to BoxMagic after redirect")
 
             if 'checkin' not in self.page.url.lower():
                 logger.warning(f"Warning: Current URL doesn't contain 'checkin'. Expected: {self.config.CHECKIN_URL}")
-            
-            # Wait for page to load - try multiple selectors
-            logger.info("Waiting for page to load...")
+
             try:
-                # Increased timeout for Render
                 self.page.wait_for_selector('.pace-done', timeout=30000)
                 logger.info("✓ Page loaded (pace-done found)")
-            except:
-                logger.warning("pace-done selector not found, trying alternative wait...")
-                self.page.wait_for_load_state('networkidle', timeout=30000)
-                logger.info("✓ Page loaded (networkidle)")
-            
-            self.page.wait_for_timeout(5000)  # Increased extra wait for dynamic content
-            
-            # Take screenshot to verify we're on the right page
+            except Exception:
+                logger.warning("pace-done selector not found, continuing")
+            self.page.wait_for_timeout(2000)
+
             self.page.screenshot(
                 path=str(self.config.SCREENSHOTS_DIR / 'checkin_page_loaded.png'),
                 full_page=True
             )
-            logger.info("✓ Screenshot saved: checkin_page_loaded.png")
-            
+
+            date_strs = [(start_date + timedelta(days=i)).strftime('%d-%m-%Y') for i in range(days_count)]
+            previous_dates = (existing_data or {}).get('dates') or {}
+
             all_data = {
                 'scrapedAt': datetime.now().isoformat(),
                 'dateRange': {
@@ -1412,200 +1519,109 @@ class BoxMagicScraper:
                     'endDay': end_date.day,
                     'month': start_date.month,
                     'year': start_date.year,
-                    'startDate': start_date.strftime('%d-%m-%Y'),
-                    'endDate': end_date.strftime('%d-%m-%Y'),
+                    'startDate': date_strs[0],
+                    'endDate': date_strs[-1],
                     'daysCount': days_count
                 },
-                'dates': {}
+                # Until a date is re-scraped, keep serving its previous snapshot so the screen
+                # never goes blank mid-run. Dates outside the window are dropped. Each date is
+                # REPLACED (never merged) once scraped, so removed classes and stale
+                # reservations disappear. Previous snapshots are never mutated.
+                'dates': {d: previous_dates[d] for d in date_strs if d in previous_dates},
             }
+            failed_dates = []
 
-            # Initialize with existing data if provided
-            if existing_data and existing_data.get('dates'):
-                logger.info(f"Initializing with existing data for {len(existing_data['dates'])} dates")
-                all_data['dates'] = existing_data['dates'].copy()
-            
-            # Process each date (without navigating again)
-            for i in range(days_count):
-                current_date = start_date + timedelta(days=i)
-                date_str = current_date.strftime('%d-%m-%Y')
-                
+            for i, date_str in enumerate(date_strs):
                 logger.info(f"\n{'#'*80}")
                 logger.info(f"Processing date: {date_str} (Day {i + 1}/{days_count})")
                 logger.info(f"{'#'*80}\n")
-                
-                # Initialize date entry in all_data if not exists
-                if date_str not in all_data['dates']:
-                    all_data['dates'][date_str] = {
-                        'date': date_str,
-                        'classes': {},
-                        'totalClasses': 0,
-                        'scrapedAt': datetime.now().isoformat()
-                    }
-                
-                # Define per-class callback to update main data structure
-                def on_class_scraped_handler(d_str, c_data):
-                    if d_str in all_data['dates']:
-                        # Update class data (use classId as key for uniqueness)
-                        key = c_data.get('classId') or c_data.get('class')
-                        all_data['dates'][d_str]['classes'][key] = c_data
-                        
-                        # Update totals
-                        all_data['dates'][d_str]['totalClasses'] = len(all_data['dates'][d_str]['classes'])
-                        
-                        # Update summary
-                        all_data['summary'] = {
-                            'totalDates': len(all_data['dates']),
-                            'totalClasses': sum(d.get('totalClasses', 0) for d in all_data['dates'].values()),
-                            'totalReservations': sum(
-                                sum(c.get('totalReservations', 0) for c in d.get('classes', {}).values())
-                                for d in all_data['dates'].values()
-                            )
-                        }
-                        
-                        # Trigger main progress callback
-                        if on_progress:
-                            on_progress(all_data)
 
-                try:
-                    # Don't navigate again, we're already on the check-in page
-                    # First attempt: assume we are on the page
-                    date_data = self.scrape_checkin_for_date(
-                        date_str, 
-                        navigate=False,
-                        on_class_scraped=on_class_scraped_handler
-                    )
-                except Exception as e:
-                    logger.warning(f"Error processing date {date_str} on first attempt: {str(e)}")
-                    logger.info("Attempting retry with full navigation/refresh...")
-                    
-                    try:
-                        # Second attempt: force navigation to refresh state
-                        date_data = self.scrape_checkin_for_date(
-                            date_str, 
-                            navigate=True,
-                            on_class_scraped=on_class_scraped_handler
-                        )
-                        logger.info(f"✓ Retry successful for date {date_str}")
-                    except Exception as retry_e:
-                        logger.error(f"Error processing date {date_str} on retry: {str(retry_e)}", exc_info=True)
-                        self.page.screenshot(
-                            path=str(self.config.SCREENSHOTS_DIR / f'error_date_{date_str.replace("-", "_")}.png')
-                        )
-                        date_data = {}
-                
+                date_data = self.scrape_checkin_for_date(date_str, navigate=False)
+                if not date_data:
+                    logger.warning(f"Retrying {date_str} with full navigation...")
+                    date_data = self.scrape_checkin_for_date(date_str, navigate=True)
+
                 if date_data:
-                    # Merge with existing data for this date if it exists
-                    if date_str in all_data['dates']:
-                        existing_date_data = all_data['dates'][date_str]
-                        existing_classes = existing_date_data.get('classes', {})
-                        new_classes = date_data.get('classes', {})
-                        
-                        # Start with existing classes
-                        merged_classes = existing_classes.copy()
-                        
-                        # 1. Identify all class IDs in the new data
-                        new_class_ids = set()
-                        for c_data in new_classes.values():
-                            if 'classId' in c_data and c_data['classId']:
-                                new_class_ids.add(c_data['classId'])
-                        
-                        # 2. Remove any existing classes that match these IDs (to handle renamed classes)
-                        # This prevents "Ghost" classes where the name changed but it's the same class
-                        keys_to_remove = []
-                        for name, c_data in merged_classes.items():
-                            if 'classId' in c_data and c_data['classId'] in new_class_ids:
-                                keys_to_remove.append(name)
-                        
-                        for key in keys_to_remove:
-                            del merged_classes[key]
-                            logger.info(f"Removed stale class entry '{key}' (replaced by new scrape with same ID)")
-                        
-                        # Update with new classes (new data wins)
-                        merged_classes.update(new_classes)
-                        
-                        # Update date_data with merged classes
-                        date_data['classes'] = merged_classes
-                        date_data['totalClasses'] = len(merged_classes)
-                        
-                        # Recalculate total reservations for this date
-                        # Note: We don't have reservation counts for existing classes that weren't scraped this time
-                        # unless we preserved the whole object. Fortunately we did copy existing_classes.
-                        
-                        logger.info(f"Merged data for {date_str}: {len(existing_classes)} existing + {len(new_classes)} new -> {len(merged_classes)} total classes")
-                    
+                    # A class whose reservations request failed this run keeps its previous
+                    # data (flagged stale) instead of vanishing from the screen.
+                    failed_ids = set(date_data.get('failedClasses') or [])
+                    if failed_ids:
+                        prev_classes = (previous_dates.get(date_str) or {}).get('classes') or {}
+                        for prev in prev_classes.values():
+                            cid = prev.get('classId')
+                            if cid in failed_ids:
+                                date_data['classes'][cid] = {**prev, 'stale': True}
+                    date_data['totalClasses'] = len(date_data['classes'])
                     all_data['dates'][date_str] = date_data
-                    
-                    total_classes = date_data.get('totalClasses', 0)
-                    total_reservations = sum(
-                        class_data.get('totalReservations', 0)
-                        for class_data in date_data.get('classes', {}).values()
-                    )
-                    logger.info(f"✓ Date {date_str}: {total_classes} classes, {total_reservations} total reservations")
-                    
-                    # Update summary for incremental saving (final update for date)
-                    all_data['summary'] = {
-                        'totalDates': len(all_data['dates']),
-                        'totalClasses': sum(d.get('totalClasses', 0) for d in all_data['dates'].values()),
-                        'totalReservations': sum(
-                            sum(c.get('totalReservations', 0) for c in d.get('classes', {}).values())
-                            for d in all_data['dates'].values()
-                        )
-                    }
-                    
-                    # Call progress callback if provided
-                    if on_progress:
-                        try:
-                            on_progress(all_data)
-                        except Exception as e:
-                            logger.error(f"Error in progress callback: {e}")
-                            
+                    total_res = sum(c.get('totalReservations', 0) for c in date_data['classes'].values())
+                    logger.info(f"✓ Date {date_str}: {date_data['totalClasses']} classes, {total_res} total reservations")
                 else:
                     logger.error(f"✗ Failed to scrape date: {date_str}")
-                
-                # Delay between dates
+                    failed_dates.append(date_str)
+                    if date_str in all_data['dates']:
+                        all_data['dates'][date_str] = {**all_data['dates'][date_str], 'stale': True}
+
+                all_data['summary'] = self._summarize_checkin(all_data)
+                if failed_dates:
+                    all_data['failedDates'] = failed_dates
+                if on_progress:
+                    try:
+                        on_progress(all_data)
+                    except Exception as e:
+                        logger.error(f"Error in progress callback: {e}")
+
                 self.page.wait_for_timeout(1000)
-            
-            # Calculate totals
-            total_dates = len(all_data['dates'])
-            total_classes = sum(
-                date_data.get('totalClasses', 0)
-                for date_data in all_data['dates'].values()
-            )
-            total_reservations = sum(
-                sum(class_data.get('totalReservations', 0)
-                    for class_data in date_data.get('classes', {}).values())
-                for date_data in all_data['dates'].values()
-            )
-            
-            all_data['summary'] = {
-                'totalDates': total_dates,
-                'totalClasses': total_classes,
-                'totalReservations': total_reservations
-            }
-            
+
+            all_data['summary'] = self._summarize_checkin(all_data)
+            summary = all_data['summary']
             logger.info(f"\n{'='*80}")
             logger.info("CHECK-IN SCRAPING SUMMARY")
-            logger.info(f"{'='*80}")
-            logger.info(f"Total dates processed: {total_dates}")
-            logger.info(f"Total classes: {total_classes}")
-            logger.info(f"Total reservations: {total_reservations}")
+            logger.info(f"Total dates processed: {summary['totalDates']} (failed: {len(failed_dates)})")
+            logger.info(f"Total classes: {summary['totalClasses']}")
+            logger.info(f"Total reservations: {summary['totalReservations']}")
             logger.info(f"{'='*80}\n")
-            
+
             return all_data
-            
+
+        except SessionExpiredError:
+            # Surface login problems to the caller (api_server records them in /api/status)
+            raise
         except Exception as e:
             logger.error(f"Error in scrape_checkin_all_dates: {str(e)}", exc_info=True)
             return {}
-    
+
+    @staticmethod
+    def _summarize_checkin(all_data: Dict) -> Dict:
+        dates = all_data.get('dates', {})
+        return {
+            'totalDates': len(dates),
+            'totalClasses': sum(d.get('totalClasses', 0) for d in dates.values()),
+            'totalReservations': sum(
+                sum(c.get('totalReservations', 0) for c in d.get('classes', {}).values())
+                for d in dates.values()
+            ),
+        }
+
     def close(self):
-        """Close browser and cleanup"""
-        if self.page:
-            self.page.close()
-        if self.context:
-            self.context.close()
-        if self.browser:
-            self.browser.close()
-        if self.playwright:
-            self.playwright.stop()
-        
+        """Close browser and cleanup.
+
+        Every step is guarded so playwright.stop() always runs. If it doesn't, the sync
+        Playwright event loop stays attached to the scheduler's worker thread and every
+        later run fails with "using Playwright Sync API inside the asyncio loop".
+        """
+        for name in ("page", "context", "browser"):
+            obj = getattr(self, name, None)
+            if obj:
+                try:
+                    obj.close()
+                except Exception as e:
+                    logger.warning(f"Error closing {name}: {e}")
+                setattr(self, name, None)
+        if getattr(self, "playwright", None):
+            try:
+                self.playwright.stop()
+            except Exception as e:
+                logger.warning(f"Error stopping playwright: {e}")
+            self.playwright = None
+
         logger.info("Browser closed")
