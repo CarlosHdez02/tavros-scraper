@@ -90,6 +90,8 @@ def run_checkin_scraper():
         logger.warning("Scraping already in progress, skipping...")
         return
     
+    scraper = None
+    original_headless = Config.HEADLESS
     try:
         SCRAPING_STATUS['is_scraping'] = True
         SCRAPING_STATUS['last_scrape'] = datetime.now().isoformat()
@@ -102,7 +104,6 @@ def run_checkin_scraper():
         Config.validate()
         
         # Force headless mode for API server to avoid terminal issues
-        original_headless = Config.HEADLESS
         Config.HEADLESS = True
         
         scraper = BoxMagicScraper(Config)
@@ -162,6 +163,11 @@ def run_checkin_scraper():
         logger.error(f"Error during scheduled scraping: {e}", exc_info=True)
         SCRAPING_STATUS['error'] = str(e)
     finally:
+        # Always release Playwright, even when login/scraping raised. A leaked sync
+        # Playwright instance poisons the scheduler thread for all future runs.
+        if scraper is not None:
+            scraper.close()
+        Config.HEADLESS = original_headless
         SCRAPING_STATUS['is_scraping'] = False
 
 
@@ -169,13 +175,14 @@ def run_calendar_scraper():
     """Run calendar scraper"""
     global LATEST_CALENDAR_DATA, SCRAPING_STATUS
     
+    scraper = None
+    original_headless = Config.HEADLESS
     try:
         logger.info("Starting scheduled calendar scraping...")
         
         Config.validate()
         
         # Force headless mode for API server to avoid terminal issues
-        original_headless = Config.HEADLESS
         Config.HEADLESS = True
         
         scraper = BoxMagicScraper(Config)
@@ -202,6 +209,10 @@ def run_calendar_scraper():
         
     except Exception as e:
         logger.error(f"Error during calendar scraping: {e}", exc_info=True)
+    finally:
+        if scraper is not None:
+            scraper.close()
+        Config.HEADLESS = original_headless
 
 
 # ========================================

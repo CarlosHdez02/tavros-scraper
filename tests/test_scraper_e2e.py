@@ -84,9 +84,23 @@ class TestParseClassesFromApiResponse:
         result = scraper._parse_classes_from_api_response(SAMPLE_DATE_GET_CLASES)
         assert len(result) == 2
         assert result[0]["value"] == "104996-237092"
-        assert result[0]["text"] == "Sesión grupal 6:00 am"
+        # Label matches the BoxMagic check-in dropdown: "<nombre> - HH:MM a HH:MM - Presencial"
+        assert result[0]["text"] == "Sesión grupal 6:00 am - 06:00 a 07:00 - Presencial"
+        assert result[0]["nombre"] == "Sesión grupal 6:00 am"
+        assert result[0]["hora_inicio"] == "06:00"
+        assert result[0]["hora_fin"] == "07:00"
         assert result[1]["value"] == "105112-237418"
-        assert result[1]["text"] == "Sesión semiprivada 10:15 am"
+        assert result[1]["text"] == "Sesión semiprivada 10:15 am - 10:15 a 11:15 - Presencial"
+
+    def test_online_class_label(self, scraper):
+        data = {"clases": [{"nombre": "Zoom", "hora_inicio": "07:00", "hora_fin": "08:00",
+                            "clase_id": 1, "dias_clases_id": 2, "clase_online": 1}]}
+        assert scraper._parse_classes_from_api_response(data)[0]["text"] == "Zoom - 07:00 a 08:00 - Online"
+
+    def test_login_url_detection(self):
+        assert BoxMagicScraper._is_login_url("https://auth.boxmagic.cl/login/")
+        assert BoxMagicScraper._is_login_url("https://boxmagic.cl/login")
+        assert not BoxMagicScraper._is_login_url("https://boxmagic.cl/checkin/clases")
 
     def test_value_format_clase_id_dias_clases_id(self, scraper):
         """Value must be clase_id-dias_clases_id for get_alumnos_clase endpoint."""
